@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Original illustration of a calm digital help desk for preparing a cybercrime report">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dceee9"/>
+      <stop offset="55%" stop-color="#eef6f3"/>
+      <stop offset="100%" stop-color="#f7faf8"/>
+    </linearGradient>
+    <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#0b4f4a"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8f4f1"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1280" cy="160" r="120" fill="#f6a623" opacity="0.22"/>
+  <circle cx="220" cy="720" r="180" fill="#0f766e" opacity="0.08"/>
+  <circle cx="1480" cy="760" r="140" fill="#315f86" opacity="0.08"/>
+
+  <!-- abstract window / calm workspace -->
+  <rect x="180" y="150" width="720" height="480" rx="28" fill="#ffffff" stroke="#d9e2df" stroke-width="3"/>
+  <rect x="210" y="190" width="660" height="48" rx="12" fill="#eef7f4"/>
+  <rect x="230" y="204" width="180" height="20" rx="6" fill="#0f766e" opacity="0.35"/>
+  <rect x="210" y="270" width="300" height="16" rx="8" fill="#c5d8d2"/>
+  <rect x="210" y="302" width="420" height="16" rx="8" fill="#d9e2df"/>
+  <rect x="210" y="334" width="360" height="16" rx="8" fill="#d9e2df"/>
+  <rect x="210" y="390" width="280" height="120" rx="16" fill="url(#screen)" stroke="#d9e2df"/>
+  <rect x="230" y="414" width="160" height="14" rx="7" fill="#0f766e" opacity="0.45"/>
+  <rect x="230" y="442" width="220" height="12" rx="6" fill="#b7ccc6"/>
+  <rect x="230" y="468" width="180" height="12" rx="6" fill="#b7ccc6"/>
+  <rect x="520" y="390" width="320" height="120" rx="16" fill="#fff8eb" stroke="#f0d7a4"/>
+  <rect x="540" y="418" width="140" height="14" rx="7" fill="#f6a623" opacity="0.7"/>
+  <rect x="540" y="448" width="240" height="12" rx="6" fill="#e2c48a"/>
+  <rect x="540" y="474" width="200" height="12" rx="6" fill="#e2c48a"/>
+
+  <!-- abstract person silhouette (original geometric figure) -->
+  <circle cx="1180" cy="280" r="54" fill="#0b4f4a"/>
+  <path d="M1050 520c20-110 90-170 230-170s210 60 230 170" fill="#0f766e"/>
+  <rect x="980" y="520" width="400" height="28" rx="14" fill="url(#desk)"/>
+
+  <!-- floating evidence cards -->
+  <g transform="translate(1040 180)">
+    <rect width="150" height="100" rx="14" fill="#ffffff" stroke="#d9e2df" stroke-width="3"/>
+    <rect x="18" y="22" width="90" height="12" rx="6" fill="#315f86" opacity="0.45"/>
+    <rect x="18" y="46" width="114" height="10" rx="5" fill="#d9e2df"/>
+    <rect x="18" y="66" width="72" height="10" rx="5" fill="#d9e2df"/>
+  </g>
+  <g transform="translate(1220 330) rotate(-8)">
+    <rect width="150" height="100" rx="14" fill="#ffffff" stroke="#d9e2df" stroke-width="3"/>
+    <rect x="18" y="22" width="70" height="12" rx="6" fill="#0f766e" opacity="0.5"/>
+    <rect x="18" y="46" width="114" height="10" rx="5" fill="#d9e2df"/>
+    <rect x="18" y="66" width="96" height="10" rx="5" fill="#d9e2df"/>
+  </g>
+
+  <!-- soft floor band -->
+  <rect x="0" y="760" width="1600" height="140" fill="#e7f1ee"/>
+  <text x="80" y="840" fill="#5b6964" font-family="system-ui, sans-serif" font-size="28" font-weight="600">Independent prototype illustration · original artwork</text>
+</svg>

@@ -1,0 +1,28 @@
+# Third-party notices
+
+This prototype redistributes open-source libraries under their own licenses.
+Direct dependencies and their SPDX licenses:
+
+| Package | License |
+|---------|---------|
+| busboy | MIT |
+| fflate | MIT |
+| jspdf | MIT |
+| mammoth | BSD-2-Clause |
+| openai (SDK only) | Apache-2.0 |
+| zod | MIT |
+| esbuild | MIT |
+| playwright-core | Apache-2.0 |
+
+Transitive packages are likewise permissive (MIT, Apache-2.0, BSD, ISC, or dual-licensed with a permissive option). Full license texts ship inside `node_modules/<package>/`.
+
+## Not open-source / paid services
+
+- **OpenAI API** (models used for extraction, transcription, and TTS) is a commercial service. Using live AI features requires your own API key and acceptance of OpenAI’s terms. The `openai` npm package is Apache-2.0; the hosted API is not redistributed here.
+- Official government sites and helplines (`cybercrime.gov.in`, `1930`, `112`) are linked for citizen guidance only. No government logos, trademarks, or production systems are embedded.
+
+## Project assets and data
+
+- `assets/nccrp-hero.svg` is **original artwork created for this prototype** and covered by the project `LICENSE`.
+- Sample names, mobile numbers, UTRs, acknowledgements, and form values in the UI are **synthetic mock data** for demo only.
+- Field-label notes in `NCCRP_Field_Inventory.txt` are observational UX notes for a public-facing form structure; they do not include scraped personal data.

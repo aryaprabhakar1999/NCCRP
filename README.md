@@ -2,6 +2,14 @@
 
 An independent hackathon prototype that helps a person prepare a cybercrime report from evidence with less distress-time typing. It is not an official government service and never submits to NCCRP.
 
+## Permissions and licensing
+
+- Project source and original assets are licensed under the [ISC License](LICENSE).
+- Third-party libraries and service caveats are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The hero image (`assets/nccrp-hero.svg`) is original artwork created for this prototype.
+- All demo identities, payments, OTPs, and acknowledgements are synthetic mock data.
+- No government logos are used. Links to `cybercrime.gov.in` and helplines are guidance only.
+
 ## What works
 
 - Complete financial-fraud prototype journey with citizen review and mock submission

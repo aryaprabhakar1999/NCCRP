@@ -37,6 +37,8 @@ For this project, the problem is: reporting online financial cyber crime on the 
 - Do not present the prototype as an official government product.
 - Do not use government logos in a way that suggests approval or partnership.
 - Use only code, assets, and data we have permission to use.
+- Project code and original assets are covered by `LICENSE` (ISC); dependency notices are in `THIRD_PARTY_NOTICES.md`.
+- Hero art is original SVG (`assets/nccrp-hero.svg`); no stock photos or government logos are bundled.
 
 ## Product Positioning For This Prototype
 

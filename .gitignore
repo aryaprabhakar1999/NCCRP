@@ -6,5 +6,10 @@ node_modules/
 npm-debug.log*
 *.png
 !assets/**/*.png
+*.jpg
+*.jpeg
+*.webp
 Screenshot*
 adhar*
+aadhaar*
+Aadhaar*
