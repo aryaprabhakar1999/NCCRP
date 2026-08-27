@@ -1,0 +1,211 @@
+NCCRP FIELD INVENTORY
+Build What Moves India - Evidence-to-Report Prototype
+August 2026
+------------------------------------------------------------
+
+
+SECTION 1: FINANCIAL FRAUD - ALL PORTAL FIELDS
+(in order of appearance on cybercrime.gov.in)
+
+PRE-LOGIN CHECKLIST (shown before login):
+- Incident Date and Time
+- Incident details (min 200 chars, no special chars #$@^*`"~|!)
+- Soft copy of National ID (Voter ID / DL / Passport / PAN / Aadhaar) - JPEG/JPG/PNG, max 5MB
+- Bank / Wallet / Merchant name
+- 12-digit Transaction ID / UTR No.
+- Date of transaction
+- Fraud amount
+- Soft copy of all relevant evidence (max 10MB each)
+
+LOGIN:
+- State (dropdown)
+- Login ID (email)
+- Mobile No (+91)
+- OTP
+- CAPTCHA
+
+USER PROFILE (one-time setup):
+- Title (Mr / Mrs / Dr / Shri / Smt / Prof / Miss)
+- Name
+- Mobile
+- Date of Birth
+- Gender
+- Email ID
+- Father / Mother / Spouse (dropdown + name)
+- House No.
+- Street Name
+- Colony
+- Vill / Town / City
+- Tehsil
+- Country
+- State
+- District
+- Police Station
+- Pincode
+
+TAB 1 - INCIDENT DETAILS:
+- Category of complaint (dropdown):
+    Online and Social Media Related Crime
+    Online Financial Fraud
+    Hacking / Damage to computer system
+    Online Cyber Trafficking
+    Online Gambling / Betting
+    Ransomware
+    Cryptocurrency Crime
+    Cyber Terrorism
+    Any Other Cyber Crime
+- Sub-Category (dropdown, for Online Financial Fraud):
+    Aadhar Enabled Payment System (AEPS)
+    Business Email Compromise / Email Takeover
+    Debit / Credit Card Fraud / Sim Swap Fraud
+    Demat / Depository Fraud
+    E-Wallet Related Fraud
+    Fraud Call / Vishing
+    Internet Banking Related Fraud
+    UPI Related Frauds
+- Approximate date of incident (dd-mm-yyyy)
+- Time of incident (HH dropdown + MM dropdown + AM/PM dropdown)
+- Is there any delay in reporting? (Yes / No)
+- Where did the incident occur? (dropdown)
+- Additional information about the incident (min 200 chars, max 1500, restricted special chars)
+
+TRANSACTION DETAILS (repeatable - Add More for multiple transactions):
+- Wallet / PG / PA (dropdown)
+- Account No. / Wallet ID / Merchant ID / UPI ID
+- Transaction ID / UTR Number (12-digit, mandatory)
+- Amount
+- Transaction Date
+- Transaction Time (HH + MM + AM/PM)
+- Reference No.
+- Do you have Suspect Account Details? (Yes / No)
+
+TAB 2 - SUSPECT DETAILS (optional):
+- Consent checkbox (share with agencies)
+- Suspect Name
+- ID Type (dropdown)
+- ID Number
+- Upload suspect photograph (JPG/JPEG/PNG/PDF, max 5MB)
+- Share suspect address? (Yes / No)
+- Suspect Address fields (if Yes)
+
+TAB 3 - COMPLAINANT DETAILS:
+- Title
+- Name
+- Mobile No.
+- Gender
+- Date of Birth
+- Father / Mother / Spouse Name
+- Email ID
+- House No., Street Name, Colony, Vill/Town/City, Tehsil
+- Country, State, District, Police Station, Pincode
+- Relationship with victim (Self / Other)
+- Upload National ID of victim (mandatory)
+
+TAB 4 - PREVIEW AND SUBMIT:
+- Full data review
+- Certification checkbox
+- Confirm and Submit / Reset / Download PDF
+
+
+------------------------------------------------------------
+
+
+SECTION 2: FINANCIAL FRAUD - AI vs CITIZEN SPLIT
+
+WHAT AI EXTRACTS FROM UPLOADED EVIDENCE:
+(from GPay / PhonePe screenshot, bank SMS, transaction receipt)
+- Transaction ID / UTR (12-digit)
+- Amount debited
+- Date of transaction
+- Time of transaction
+- Bank name / Payment app name
+- Account No. / UPI ID / Wallet ID (from which money left)
+- Merchant / Recipient name
+- Reference No. (if visible)
+
+WHAT THE CITIZEN MUST ENTER (cannot be read from payment evidence):
+- Sub-category of fraud (which of the 8 types applies)
+- Where did the incident occur (platform / location)
+- Incident description (min 200 chars) - AI can draft a starting version from extracted data
+- Whether there is a delay in reporting
+- Suspect details (if known)
+- National ID upload (citizen's own document)
+- Profile address details (one-time, pre-filled on repeat)
+
+
+------------------------------------------------------------
+
+
+SECTION 3: WOMEN / CHILDREN CRIME - ALL PORTAL FIELDS
+(Anonymous flow - no login required)
+
+TAB 1 - COMPLAINT AND INCIDENT DETAILS:
+- Category of complaint (dropdown):
+    Rape / Gang Rape (RGR) - Sexually Abusive Content
+    Sexually Obscene Material
+    Sexually Explicit Act
+    CSEAM - Child Sexual Exploitative and Abuse Material
+- Approximate date of incident (dd-mm-yyyy)
+- Time (HH + MM + AM/PM)
+- Reason for delay in reporting (text, optional)
+- State / UT (dropdown)
+- District (dropdown)
+- Police Station (dropdown, optional)
+- Where did the incident occur? (dropdown):
+    Email
+    Facebook
+    Instagram
+    Snapchat
+    Twitter
+    WhatsApp
+    Website URL
+    YouTube
+    LinkedIn
+    Telegram
+    Other
+- Additional information about the incident (min 200 chars, max 1500)
+
+TAB 2 - SUSPECT DETAILS (optional):
+- Suspect Name
+- ID Type (dropdown)
+- ID Number
+- Upload suspect photograph
+- Share suspect address? (Yes / No)
+
+TAB 3 - PREVIEW AND SUBMIT:
+- Full review
+- Submit
+
+
+------------------------------------------------------------
+
+
+SECTION 4: WOMEN / CHILDREN CRIME - AI vs CITIZEN SPLIT
+
+WHAT AI EXTRACTS FROM UPLOADED EVIDENCE:
+(from chat screenshots, social media screenshots, saved images)
+- Platform where incident occurred (WhatsApp / Instagram / Telegram etc.)
+- Date and time of messages / posts (from screenshot metadata or visible timestamps)
+- Nature of content (type of abuse / explicit content)
+- Persons mentioned or visible
+- Sequence of events (to build a timeline)
+- Draft of the 200-character minimum incident description
+  (so the victim does not have to write it themselves under trauma)
+
+WHAT THE CITIZEN MUST CONFIRM OR ENTER:
+- Category of complaint (AI can suggest based on content type, citizen confirms)
+- State / UT and District (location of victim, not detectable from evidence)
+- Whether there is a delay and reason for it
+- Verification and correction of AI-drafted incident description
+- Any suspect details they choose to share
+
+
+------------------------------------------------------------
+
+Key design insight:
+For financial fraud, AI reduces data transcription burden.
+For women / children crime, AI reduces re-traumatization burden.
+Both converge on one principle: AI prepares, citizen decides.
+
+------------------------------------------------------------
+Document prepared: August 2026 | Build What Moves India - NCCRP Prototype

@@ -1,0 +1,55 @@
+# Build What Moves India Hackathon Context
+
+Source: https://buildwhatmovesindia.com/brief
+Read date: 2026-08-27
+
+## Prototype Goal
+
+Build a simpler, clearer, and more useful citizen journey for a real problem on an Indian public-service digital service.
+
+For this project, the problem is: reporting online financial cyber crime on the National Cyber Crime Reporting Portal is stressful and form-heavy, especially for users under distress.
+
+## Submission Requirements
+
+- Live public browser link with no access request.
+- Mock login credentials if needed.
+- Video no longer than 2 minutes:
+  - First minute: citizen demo.
+  - Second minute: how it was built and why.
+- Project summary under 250 words.
+- Deadline: August 28, 2026 at 8:00 PM IST.
+
+## What Reviewers Care About
+
+- Complete citizen journey from start to finish.
+- Easier to understand and use than the current experience.
+- Designed for real Indian users, including mobile users, slower connections, and people with limited digital experience.
+- Meaningful use of Codex or OpenAI model-powered behavior.
+- Clear distinction between working prototype behavior and mocked behavior.
+- Honest limitations and safe scale-up thinking.
+
+## Safety Rules
+
+- Do not access, test, interfere with, or integrate against live government systems.
+- Do not reverse-engineer private systems or use undocumented private APIs.
+- Do not scrape personal or restricted information.
+- Do not use real Aadhaar, PAN, password, OTP, payment, health, or other sensitive data.
+- Do not present the prototype as an official government product.
+- Do not use government logos in a way that suggests approval or partnership.
+- Use only code, assets, and data we have permission to use.
+
+## Product Positioning For This Prototype
+
+- This is a clickable demo, not an official portal or real submission system.
+- OTP, Aadhaar extraction, evidence parsing, and submission are mocked.
+- Aadhaar upload is simulated for extraction and discarded in the UI/state.
+- The core value is reducing distress-time typing by using screenshots and evidence uploads to prefill report fields.
+- The citizen always reviews and confirms extracted data before submission.
+
+## Judging Narrative
+
+- Who faces the problem: Indian citizens who have just experienced financial cyber fraud.
+- Current difficulty: too many manual fields, repeated typing from screenshots/SMS/receipts, and high cognitive load during distress.
+- What changed: one common upload, AI-assisted extraction, profile prefill, drafted incident description, and guided review.
+- Why better: faster completion, fewer errors, clearer next steps, mobile-friendly screens, and honest mock behavior.
+- Safe scale-up: consent-based extraction, sensitive document minimization, audit trails, encryption, retention limits, human review, and official integration only through approved channels.
