@@ -3,6 +3,11 @@ const elapsedTime = document.querySelector("#elapsedTime");
 
 const screens = {
   home: "home-template",
+  trackingHome: "tracking-home-template",
+  trackingLookup: "tracking-lookup-template",
+  trackingLogin: "tracking-login-template",
+  trackingList: "tracking-list-template",
+  trackingDetail: "tracking-detail-template",
   womenChildren: "women-template",
   wcLogin: "wc-login-template",
   wcStart: "wc-start-template",
@@ -185,6 +190,51 @@ const wcEvidenceSamples = [
   },
 ];
 
+const trackingRequests = [
+  {
+    ack: "NCCRP-FIN-2026-10482",
+    type: "Financial crime",
+    status: "Under review",
+    submitted: "27 Aug 2026, 10:58 AM",
+    updated: "27 Aug 2026, 12:15 PM",
+    next: "The complaint details and uploaded transaction evidence are being reviewed by the assigned desk.",
+    timeline: [
+      "Complaint submitted",
+      "Acknowledgement generated",
+      "Evidence review in progress",
+      "Agency action pending",
+    ],
+  },
+  {
+    ack: "NCCRP-WC-2026-77190",
+    type: "Women/children report",
+    status: "Submitted to agency",
+    submitted: "27 Aug 2026, 11:32 AM",
+    updated: "27 Aug 2026, 01:05 PM",
+    next: "The report has been forwarded to the appropriate agency for review and action.",
+    timeline: [
+      "Anonymous report submitted",
+      "Evidence summary prepared",
+      "Report submitted to agency",
+      "Agency review pending",
+    ],
+  },
+  {
+    ack: "NCCRP-FIN-2026-55231",
+    type: "Financial crime",
+    status: "Action initiated",
+    submitted: "26 Aug 2026, 08:44 PM",
+    updated: "27 Aug 2026, 09:20 AM",
+    next: "The payment trail has been marked for urgent action in this mocked status flow.",
+    timeline: [
+      "Complaint submitted",
+      "Transaction evidence verified",
+      "Action initiated",
+      "Final update pending",
+    ],
+  },
+];
+
 const state = {
   current: "home",
   startedAt: Date.now(),
@@ -230,6 +280,11 @@ const state = {
       suspectAddress: "",
     },
   },
+  tracking: {
+    loginMobile: "",
+    selectedAck: trackingRequests[0].ack,
+    returnTo: "trackingList",
+  },
 };
 
 function render(screen) {
@@ -237,6 +292,8 @@ function render(screen) {
   const template = document.querySelector(`#${screens[screen]}`);
   app.replaceChildren(template.content.cloneNode(true));
 
+  if (screen === "trackingList") renderTrackingList();
+  if (screen === "trackingDetail") renderTrackingDetail();
   if (screen === "wcStart") renderWcStart();
   if (screen === "wcReview") renderWcReview();
   if (screen === "wcComplaint") renderWcComplaint();
@@ -292,6 +349,10 @@ function collectForm(selector, target) {
   document.querySelectorAll(`${selector} [data-field]`).forEach((field) => {
     target[field.dataset.field] = field.value.trim();
   });
+}
+
+function findTrackingRequest(ack) {
+  return trackingRequests.find((request) => request.ack.toLowerCase() === String(ack).trim().toLowerCase());
 }
 
 function renderExtraction() {
@@ -412,6 +473,93 @@ function renderWcPreview() {
       Address: state.wc.suspect.shareAddress === "Yes" ? state.wc.suspect.suspectAddress || "Not provided" : "Not shared",
     } : { Status: "Skipped by citizen" })
   );
+}
+
+function renderTrackingList() {
+  const list = document.querySelector("#trackingList");
+  list.replaceChildren(
+    ...trackingRequests.map((request) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "request-card";
+      card.dataset.action = "open-tracking-detail";
+      card.dataset.ack = request.ack;
+      card.innerHTML = `
+        <span class="status-pill">${request.status}</span>
+        <strong>${request.type}</strong>
+        <small>${request.ack}</small>
+        <span>Submitted ${request.submitted}</span>
+      `;
+      return card;
+    })
+  );
+}
+
+function renderTrackingDetail() {
+  const request = findTrackingRequest(state.tracking.selectedAck) || trackingRequests[0];
+  document.querySelector("#trackingDetailTitle").textContent = request.ack;
+  const content = document.querySelector("#trackingDetailContent");
+  content.replaceChildren(
+    trackingStatusCard(request),
+    previewCard("Request details", {
+      "Complaint type": request.type,
+      "Submitted on": request.submitted,
+      "Last updated": request.updated,
+      "Next expected action": request.next,
+    }),
+    trackingTimelineCard(request.timeline)
+  );
+}
+
+function renderTrackingLookupResult(request, enteredAck) {
+  const result = document.querySelector("#trackingLookupResult");
+  if (!request) {
+    result.replaceChildren(
+      previewCard("Not found in demo data", {
+        "Entered number": enteredAck || "Not provided",
+        "Try one of these": trackingRequests.map((item) => item.ack).join(", "),
+      })
+    );
+    return;
+  }
+
+  result.replaceChildren(
+    trackingStatusCard(request),
+    previewCard("Request details", {
+      "Complaint type": request.type,
+      "Submitted on": request.submitted,
+      "Last updated": request.updated,
+      "Next expected action": request.next,
+    }),
+    trackingTimelineCard(request.timeline)
+  );
+}
+
+function trackingStatusCard(request) {
+  const card = document.createElement("section");
+  card.className = "preview-card status-card";
+  card.innerHTML = `
+    <h3>Current status</h3>
+    <span class="status-pill large">${request.status}</span>
+    <p>${request.ack}</p>
+  `;
+  return card;
+}
+
+function trackingTimelineCard(items) {
+  const card = document.createElement("section");
+  card.className = "preview-card";
+  const heading = document.createElement("h3");
+  heading.textContent = "Status timeline";
+  const list = document.createElement("ol");
+  list.className = "timeline";
+  items.forEach((item) => {
+    const entry = document.createElement("li");
+    entry.textContent = item;
+    list.append(entry);
+  });
+  card.append(heading, list);
+  return card;
 }
 
 function renderPreview() {
@@ -605,6 +753,47 @@ function handleAction(action, target) {
   if (action === "go-home") {
     state.startedAt = Date.now();
     render("home");
+    return;
+  }
+  if (action === "fill-sample-ack") {
+    document.querySelector("#ackInput").value = trackingRequests[0].ack;
+    renderTrackingLookupResult(trackingRequests[0], trackingRequests[0].ack);
+    return;
+  }
+  if (action === "lookup-ack") {
+    const enteredAck = document.querySelector("#ackInput").value.trim();
+    const request = findTrackingRequest(enteredAck);
+    if (request) state.tracking.selectedAck = request.ack;
+    renderTrackingLookupResult(request, enteredAck);
+    return;
+  }
+  if (action === "send-tracking-otp") {
+    const mobile = document.querySelector("#trackingMobileInput").value.trim();
+    if (!/^\d{10}$/.test(mobile)) {
+      showMessage("Enter a 10-digit mobile number.");
+      return;
+    }
+    state.tracking.loginMobile = mobile;
+    document.querySelector("#trackingOtpArea").classList.remove("hidden");
+    showMessage("Mock OTP generated: 123456");
+    return;
+  }
+  if (action === "verify-tracking-otp") {
+    if (document.querySelector("#trackingOtpInput").value.trim() !== "123456") {
+      showMessage("Use demo OTP 123456.");
+      return;
+    }
+    render("trackingList");
+    return;
+  }
+  if (action === "open-tracking-detail") {
+    state.tracking.selectedAck = target.dataset.ack;
+    state.tracking.returnTo = state.current === "trackingList" ? "trackingList" : "trackingLookup";
+    render("trackingDetail");
+    return;
+  }
+  if (action === "tracking-detail-back") {
+    render(state.tracking.returnTo || "trackingHome");
     return;
   }
   if (action === "start-wc-anonymous") {

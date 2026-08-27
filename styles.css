@@ -137,7 +137,7 @@ button {
 .hero-overlay {
   position: relative;
   z-index: 1;
-  width: min(760px, calc(100% - 32px));
+  width: min(980px, calc(100% - 32px));
   padding: clamp(34px, 7vw, 82px) 0 58px clamp(16px, 5vw, 58px);
 }
 
@@ -179,7 +179,12 @@ h2 {
   line-height: 1.55;
 }
 
-.choice-grid,
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .two-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -240,6 +245,76 @@ h2 {
 .choice-card small {
   color: var(--muted);
   line-height: 1.35;
+}
+
+.request-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.request-card {
+  display: grid;
+  gap: 8px;
+  min-height: 170px;
+  padding: 18px;
+  background: #fbfdfc;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(13, 69, 64, 0.08);
+}
+
+.request-card:hover,
+.request-card:focus-visible {
+  border-color: var(--teal);
+  outline: none;
+}
+
+.request-card strong,
+.request-card small,
+.request-card span {
+  display: block;
+}
+
+.request-card small,
+.request-card span:not(.status-pill) {
+  color: var(--muted);
+}
+
+.status-pill {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #e8f4f2;
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-pill.large {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.status-card p {
+  margin-bottom: 0;
+}
+
+.tracking-result {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.timeline {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 22px;
+  color: #263632;
 }
 
 .status-strip {
@@ -559,6 +634,13 @@ td input {
   font-weight: 900;
 }
 
+@media (max-width: 980px) {
+  .choice-grid,
+  .request-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 780px) {
   .topbar {
     align-items: flex-start;
@@ -596,7 +678,6 @@ td input {
     font-size: 36px;
   }
 
-  .choice-grid,
   .two-actions,
   .status-strip,
   .form-grid,

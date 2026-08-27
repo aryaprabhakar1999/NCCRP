@@ -47,6 +47,13 @@
                 <small>Shown in this demo as a separate reporting path</small>
               </span>
             </button>
+            <button class="choice-card" type="button" data-next="trackingHome">
+              <span class="choice-icon" aria-hidden="true">?</span>
+              <span>
+                <strong>Track Submitted Complaints</strong>
+                <small>Check one acknowledgement number or view all demo requests</small>
+              </span>
+            </button>
           </div>
         </div>
       </section>
@@ -55,6 +62,79 @@
         <span>Citizen confirms</span>
         <span>No real submission</span>
         <span>Mock OTP and parsing</span>
+      </section>
+    </template>
+
+    <template id="tracking-home-template">
+      <section class="panel narrow">
+        <button class="ghost back" type="button" data-action="go-home">Back</button>
+        <p class="eyebrow">Mock complaint tracking</p>
+        <h2>Track submitted complaints</h2>
+        <p class="support-note">This demo shows synthetic statuses only. It does not connect to the official portal or retrieve real complaint data.</p>
+        <div class="two-actions">
+          <button class="choice-card primary-choice" type="button" data-next="trackingLookup">
+            <span class="choice-icon" aria-hidden="true">#</span>
+            <span><strong>Enter acknowledgement number</strong><small>Check the status of one submitted request</small></span>
+          </button>
+          <button class="choice-card" type="button" data-next="trackingLogin">
+            <span class="choice-icon" aria-hidden="true">↻</span>
+            <span><strong>Login to view all requests</strong><small>Use mocked mobile OTP to see demo complaint history</small></span>
+          </button>
+        </div>
+      </section>
+    </template>
+
+    <template id="tracking-lookup-template">
+      <section class="panel narrow">
+        <button class="ghost back" type="button" data-next="trackingHome">Back</button>
+        <p class="eyebrow">Acknowledgement lookup</p>
+        <h2>Enter acknowledgement number</h2>
+        <label>Acknowledgement number
+          <input id="ackInput" placeholder="NCCRP-FIN-2026-10482" autocomplete="off" />
+        </label>
+        <div class="button-row">
+          <button class="secondary" type="button" data-action="fill-sample-ack">Use sample number</button>
+          <button class="primary" type="button" data-action="lookup-ack">Show complaint status</button>
+        </div>
+        <div id="trackingLookupResult" class="tracking-result"></div>
+      </section>
+    </template>
+
+    <template id="tracking-login-template">
+      <section class="panel narrow">
+        <button class="ghost back" type="button" data-next="trackingHome">Back</button>
+        <p class="eyebrow">Mock login</p>
+        <h2>View all submitted requests</h2>
+        <p class="support-note">Use any 10-digit mobile number and demo OTP <strong>123456</strong>. No real authentication happens.</p>
+        <label>Mobile number
+          <input id="trackingMobileInput" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+        </label>
+        <button class="secondary" type="button" data-action="send-tracking-otp">Get OTP</button>
+        <div id="trackingOtpArea" class="hidden">
+          <p class="hint">Demo OTP sent: <strong>123456</strong></p>
+          <label>Enter OTP
+            <input id="trackingOtpInput" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <button class="primary" type="button" data-action="verify-tracking-otp">Verify and view requests</button>
+        </div>
+      </section>
+    </template>
+
+    <template id="tracking-list-template">
+      <section class="panel">
+        <button class="ghost back" type="button" data-next="trackingHome">Back</button>
+        <p class="eyebrow">All demo requests</p>
+        <h2>Submitted complaint status</h2>
+        <div id="trackingList" class="request-list"></div>
+      </section>
+    </template>
+
+    <template id="tracking-detail-template">
+      <section class="panel">
+        <button class="ghost back" type="button" data-action="tracking-detail-back">Back</button>
+        <p class="eyebrow">Complaint status</p>
+        <h2 id="trackingDetailTitle">Request detail</h2>
+        <div id="trackingDetailContent" class="preview-grid"></div>
       </section>
     </template>
 
