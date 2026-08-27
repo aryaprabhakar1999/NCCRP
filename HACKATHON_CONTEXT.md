@@ -14,7 +14,7 @@ For this project, the problem is: reporting online financial cyber crime on the 
 - Live public browser link with no access request.
 - Mock login credentials if needed.
 - Video no longer than 2 minutes:
-  - First minute: citizen demo.
+  - First minute: citizen prototype walkthrough.
   - Second minute: how it was built and why.
 - Project summary under 250 words.
 - Deadline: August 28, 2026 at 8:00 PM IST.
@@ -40,9 +40,9 @@ For this project, the problem is: reporting online financial cyber crime on the 
 
 ## Product Positioning For This Prototype
 
-- This is a clickable demo, not an official portal or real submission system.
+- This is a clickable prototype, not an official portal or real submission system.
 - OTP, Aadhaar extraction, evidence parsing, and submission are mocked.
-- Aadhaar upload is simulated for extraction and discarded in the UI/state.
+- Synthetic identity and evidence uploads are retained only in the current browser session for citizen review, then cleared on refresh or when starting another report.
 - The core value is reducing distress-time typing by using screenshots and evidence uploads to prefill report fields.
 - The citizen always reviews and confirms extracted data before submission.
 

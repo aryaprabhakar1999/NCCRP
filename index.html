@@ -3,82 +3,142 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NCCRP Fast Report Demo</title>
+    <title>Cyber Crime Reporting Portal — Supportive Reporting Prototype</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <button class="brand" type="button" data-action="go-home" aria-label="Go to home">
-          <span class="brand-mark" aria-hidden="true">N</span>
+          <span class="brand-mark" aria-hidden="true">CC</span>
           <span>
-            <strong>National Cyber Crime Reporting Portal</strong>
-            <small>Fast financial crime report demo</small>
+            <strong>Cyber Crime Reporting Portal</strong>
+            <small>Independent hackathon prototype · Not a government service</small>
           </span>
         </button>
-        <div class="time-badge" aria-label="Estimated completion time">
-          <span id="elapsedTime">00:00</span>
-          <small>target &lt; 2 min</small>
+        <div class="topbar-actions">
+          <a class="urgent-link" href="tel:1930" aria-label="Call cybercrime helpline 1930">Call 1930</a>
+          <button id="authButton" class="auth-button" type="button" data-action="open-auth">Login / Sign up</button>
         </div>
       </header>
 
-      <main id="app" class="app-main" aria-live="polite"></main>
+      <nav id="journeyProgress" class="journey-progress hidden" aria-label="Report progress"></nav>
+      <main id="app" class="app-main" tabindex="-1"></main>
+      <div id="globalStatus" class="sr-only" role="status" aria-live="polite"></div>
     </div>
+
+    <template id="auth-template">
+      <section class="panel">
+        <button class="ghost back" type="button" data-action="auth-back">Back</button>
+        <p class="eyebrow">Shared account</p>
+        <h2>Login / Sign up once</h2>
+        <p class="support-note">Use a mocked OTP and synthetic identity details. Once signed in, filing and tracking will not ask you to log in again during this session.</p>
+        <div class="auth-layout">
+          <section class="person-group" aria-labelledby="authMobileHeading">
+            <div class="person-group-heading">
+              <div><p class="eyebrow">Step 1</p><h3 id="authMobileHeading">Verify mobile</h3></div>
+            </div>
+            <label>Mobile number
+              <input id="authMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+            </label>
+            <button class="secondary" type="button" data-action="send-auth-otp">Get OTP</button>
+            <div id="authOtpArea" class="hidden">
+              <p class="hint">Mocked OTP: <strong>123456</strong></p>
+              <label>Enter OTP
+                <input id="authOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
+              </label>
+            </div>
+          </section>
+          <section class="person-group" aria-labelledby="authIdentityHeading">
+            <div class="person-group-heading">
+              <div><p class="eyebrow">Step 2</p><h3 id="authIdentityHeading">Add synthetic identity</h3></div>
+            </div>
+            <label>Identity document type
+              <select id="authIdentityType">
+                <option value="Aadhaar">Aadhaar</option>
+                <option value="PAN card">PAN card</option>
+                <option value="Driving licence">Driving licence</option>
+                <option value="Voter ID">Voter ID</option>
+              </select>
+            </label>
+            <div class="upload-zone">
+              <input id="authIdentityUpload" type="file" accept="image/*,.pdf" />
+              <div>
+                <strong>Synthetic identity image or PDF</strong>
+                <span>Retained only in this browser session for review.</span>
+              </div>
+              <button class="secondary" type="button" data-action="process-auth-profile">Extract identity details</button>
+            </div>
+            <div id="authIdentityDocument" class="document-display"></div>
+          </section>
+        </div>
+        <h3 class="form-section-title">Personal details</h3>
+        <div class="form-grid auth-profile-form"></div>
+        <div class="button-row">
+          <button class="secondary" type="button" data-action="fill-auth-profile">Use synthetic identity sample</button>
+          <button class="primary" type="button" data-action="complete-auth">Continue signed in</button>
+        </div>
+      </section>
+    </template>
 
     <template id="home-template">
       <section class="hero">
         <img src="assets/nccrp-hero.png" alt="Digital help desk scene for reporting online financial crime" />
         <div class="hero-overlay">
-          <p class="eyebrow">Clickable public-service prototype</p>
-          <h1>Report cyber crime with less typing and faster review.</h1>
-          <p class="hero-copy">Upload evidence once, confirm what was extracted, and submit a clear draft when time matters.</p>
+          <p class="eyebrow">Independent, working prototype</p>
+          <h1>You are not alone. Let’s prepare your cybercrime report.</h1>
+          <p class="hero-copy">Share what you have—such as a payment screenshot or SMS. AI can organise the details, and you stay in control before anything is submitted.</p>
+          <aside class="urgent-card" aria-label="Urgent financial fraud guidance">
+            <strong>Has money just left your account?</strong>
+            <span>Call the official cybercrime helpline <a href="tel:1930">1930</a> now. Faster reporting may help stop the transfer.</span>
+          </aside>
           <div class="choice-grid">
-            <button class="choice-card primary-choice" type="button" data-next="userType">
+            <button class="choice-card primary-choice" type="button" data-action="start-financial-report">
               <span class="choice-icon" aria-hidden="true">₹</span>
               <span>
-                <strong>Report Financial Crimes</strong>
-                <small>UPI, card, wallet, internet banking and related frauds</small>
+                <strong>Prepare a financial fraud report</strong>
+                <small>Recommended: upload evidence and finish a review-ready draft</small>
               </span>
             </button>
-            <button class="choice-card" type="button" data-next="womenChildren">
+            <button class="choice-card" type="button" data-action="start-wc-report">
               <span class="choice-icon" aria-hidden="true">!</span>
               <span>
-                <strong>Report Crime Against Women and Children</strong>
-                <small>Shown in this demo as a separate reporting path</small>
+                <strong>Prepare a women or child safety report</strong>
+                <small>Anonymous or signed-in path with an immediate-danger option</small>
               </span>
             </button>
             <button class="choice-card" type="button" data-next="trackingHome">
               <span class="choice-icon" aria-hidden="true">?</span>
               <span>
-                <strong>Track Submitted Complaints</strong>
-                <small>Check one acknowledgement number or view all demo requests</small>
+                <strong>Track a complaint</strong>
+                <small>Check one acknowledgement number or view sample requests</small>
               </span>
             </button>
           </div>
         </div>
       </section>
       <section class="status-strip" aria-label="Reporting principles">
-        <span>AI prepares</span>
-        <span>Citizen confirms</span>
-        <span>No real submission</span>
-        <span>Mock OTP and parsing</span>
+        <span>AI organises</span>
+        <span>You review every detail</span>
+        <span>Files are not stored</span>
+        <span>Prototype submission only</span>
       </section>
     </template>
 
     <template id="tracking-home-template">
       <section class="panel narrow">
         <button class="ghost back" type="button" data-action="go-home">Back</button>
-        <p class="eyebrow">Mock complaint tracking</p>
+        <p class="eyebrow">Complaint tracking</p>
         <h2>Track submitted complaints</h2>
-        <p class="support-note">This demo shows synthetic statuses only. It does not connect to the official portal or retrieve real complaint data.</p>
+        <p class="support-note">This prototype shows synthetic statuses only. It does not connect to the official portal or retrieve real complaint data.</p>
         <div class="two-actions">
           <button class="choice-card primary-choice" type="button" data-next="trackingLookup">
             <span class="choice-icon" aria-hidden="true">#</span>
             <span><strong>Enter acknowledgement number</strong><small>Check the status of one submitted request</small></span>
           </button>
-          <button class="choice-card" type="button" data-next="trackingLogin">
+          <button class="choice-card" type="button" data-action="open-tracking-list">
             <span class="choice-icon" aria-hidden="true">↻</span>
-            <span><strong>Login to view all requests</strong><small>Use mocked mobile OTP to see demo complaint history</small></span>
+            <span><strong>View all requests</strong><small>Sign in once to see sample complaint history</small></span>
           </button>
         </div>
       </section>
@@ -90,7 +150,7 @@
         <p class="eyebrow">Acknowledgement lookup</p>
         <h2>Enter acknowledgement number</h2>
         <label>Acknowledgement number
-          <input id="ackInput" placeholder="NCCRP-FIN-2026-10482" autocomplete="off" />
+          <input id="ackInput" type="text" placeholder="NCCRP-FIN-2026-10482" autocomplete="off" />
         </label>
         <div class="button-row">
           <button class="secondary" type="button" data-action="fill-sample-ack">Use sample number</button>
@@ -105,15 +165,15 @@
         <button class="ghost back" type="button" data-next="trackingHome">Back</button>
         <p class="eyebrow">Mock login</p>
         <h2>View all submitted requests</h2>
-        <p class="support-note">Use any 10-digit mobile number and demo OTP <strong>123456</strong>. No real authentication happens.</p>
+        <p class="support-note">Use any 10-digit mobile number and mocked OTP <strong>123456</strong>. No real authentication happens.</p>
         <label>Mobile number
-          <input id="trackingMobileInput" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+          <input id="trackingMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
         </label>
         <button class="secondary" type="button" data-action="send-tracking-otp">Get OTP</button>
         <div id="trackingOtpArea" class="hidden">
-          <p class="hint">Demo OTP sent: <strong>123456</strong></p>
+          <p class="hint">Mocked OTP sent: <strong>123456</strong></p>
           <label>Enter OTP
-            <input id="trackingOtpInput" inputmode="numeric" maxlength="6" placeholder="123456" />
+            <input id="trackingOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
           </label>
           <button class="primary" type="button" data-action="verify-tracking-otp">Verify and view requests</button>
         </div>
@@ -123,7 +183,7 @@
     <template id="tracking-list-template">
       <section class="panel">
         <button class="ghost back" type="button" data-next="trackingHome">Back</button>
-        <p class="eyebrow">All demo requests</p>
+        <p class="eyebrow">All sample requests</p>
         <h2>Submitted complaint status</h2>
         <div id="trackingList" class="request-list"></div>
       </section>
@@ -143,15 +203,19 @@
         <button class="ghost back" type="button" data-action="go-home">Back</button>
         <p class="eyebrow">You can report safely</p>
         <h2>Crime Against Women and Children</h2>
-        <p>You can continue without sharing your identity, or use a mocked login if you want a signed-in report. This demo does not send anything to the official portal.</p>
+        <aside class="danger-card" aria-label="Immediate danger guidance">
+          <strong>Are you or someone else in immediate danger?</strong>
+          <span>Call India’s emergency number <a href="tel:112">112</a>. This prototype cannot provide emergency help.</span>
+        </aside>
+        <p>You can continue without sharing your identity. Add only what feels safe to share, and pause at any time. This prototype does not send anything to the official portal.</p>
         <div class="two-actions">
           <button class="choice-card primary-choice" type="button" data-action="start-wc-anonymous">
             <span class="choice-icon" aria-hidden="true">•</span>
-            <span><strong>Report anonymously</strong><small>No login or contact details required in this demo</small></span>
+            <span><strong>Report anonymously</strong><small>No login or contact details required</small></span>
           </button>
-          <button class="choice-card" type="button" data-next="wcLogin">
+          <button class="choice-card" type="button" data-action="start-wc-signed-in">
             <span class="choice-icon" aria-hidden="true">↻</span>
-            <span><strong>Login and report</strong><small>Use mocked mobile OTP, then continue</small></span>
+            <span><strong>Use signed-in details</strong><small>Login / Sign up once from the header</small></span>
           </button>
         </div>
       </section>
@@ -162,15 +226,15 @@
         <button class="ghost back" type="button" data-next="womenChildren">Back</button>
         <p class="eyebrow">Mock login</p>
         <h2>Verify your mobile number</h2>
-        <p class="support-note">This step is mocked. Use it only if you want the demo to show a logged-in report path.</p>
+        <p class="support-note">This step is mocked. Use it only if you want the prototype to show a logged-in report path.</p>
         <label>Mobile number
-          <input id="wcMobileInput" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+          <input id="wcMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
         </label>
         <button class="secondary" type="button" data-action="send-wc-otp">Get OTP</button>
         <div id="wcOtpArea" class="hidden">
-          <p class="hint">Demo OTP sent: <strong>123456</strong></p>
+          <p class="hint">Mocked OTP sent: <strong>123456</strong></p>
           <label>Enter OTP
-            <input id="wcOtpInput" inputmode="numeric" maxlength="6" placeholder="123456" />
+            <input id="wcOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
           </label>
           <button class="primary" type="button" data-action="verify-wc-otp">Verify and continue</button>
         </div>
@@ -200,17 +264,42 @@
       <section class="panel">
         <button class="ghost back" type="button" data-next="wcStart">Back</button>
         <p class="eyebrow">Evidence upload</p>
-        <h2>Add screenshots or images once</h2>
-        <p class="support-note">Upload chat screenshots, social media screenshots, saved images, or PDFs. In this demo, parsing is mocked and files are not submitted anywhere.</p>
+        <h2>Share what you already have</h2>
+        <p class="support-note">You do not need to retell everything. Add screenshots, a document, a link, notes, or a voice note. Files are retained only in this browser session for review.</p>
         <div class="upload-zone evidence-zone">
-          <input id="wcEvidenceUpload" type="file" accept="image/*,.pdf" multiple />
+          <input id="wcEvidenceUpload" type="file" accept="image/*,.pdf,.docx,.xlsx,.csv" multiple aria-describedby="wcUploadHelp" />
           <div>
-            <strong>Common evidence upload</strong>
-            <span>The demo prepares the platform, timestamps, timeline, and draft description for your review.</span>
+            <strong>Add screenshots or documents</strong>
+            <span id="wcUploadHelp">PNG, JPG, PDF, DOCX, XLSX or CSV. Up to 4 MB total.</span>
           </div>
-          <button class="secondary" type="button" data-action="mock-wc-evidence">Parse evidence</button>
         </div>
-        <button class="primary" type="button" data-action="mock-wc-evidence">Continue with mock extraction</button>
+        <label class="wide-field">Paste a message, link, or notes (optional)
+          <textarea id="wcPastedText" rows="4" placeholder="Paste only what you are comfortable sharing."></textarea>
+        </label>
+        <label class="upload-zone compact-upload">
+          <input id="wcAudioUpload" type="file" accept="audio/*,.m4a,.webm" />
+          <span><strong>Add a voice note (optional)</strong><small>Speak in your own words. You can review the transcript.</small></span>
+        </label>
+        <div class="processing-state hidden" id="wcProcessingState" role="status" aria-live="polite"></div>
+        <div class="button-row">
+          <button class="secondary" type="button" data-action="mock-wc-evidence">Use synthetic sample</button>
+          <button class="primary" type="button" data-action="process-wc-evidence">Prepare my report</button>
+        </div>
+      </section>
+    </template>
+
+    <template id="wc-workspace-template">
+      <section class="report-workspace">
+        <aside class="report-sidebar" aria-label="Women and children report sections">
+          <button class="ghost workspace-back" type="button" data-next="wcEvidence">Back to evidence</button>
+          <p class="eyebrow">Your report</p>
+          <nav class="section-nav wc-section-nav" aria-label="Women and children report section navigation">
+            <button type="button" data-wc-section="personalDetails"><span>1</span><strong>Personal Details</strong><small>Anonymous or signed in</small></button>
+            <button type="button" data-wc-section="incidentDetails"><span>2</span><strong>Incident Details</strong><small>What happened</small></button>
+          </nav>
+          <p class="sidebar-help">You can stay anonymous. Share only what feels safe.</p>
+        </aside>
+        <div id="wcSectionContent" class="report-section"></div>
       </section>
     </template>
 
@@ -219,13 +308,14 @@
         <button class="ghost back" type="button" data-next="wcEvidence">Back</button>
         <p class="eyebrow">AI-prepared draft</p>
         <h2>Review what was understood</h2>
-        <p class="support-note">Everything below is editable. The citizen decides what is finally included.</p>
+        <div id="wcExtractionMode" class="mode-badge">AI prepared · Needs your review</div>
+        <p class="support-note">Everything below is editable. AI can make mistakes—change or remove anything that does not look right.</p>
         <div class="form-grid wc-evidence-form"></div>
         <label class="wide-field">Sequence of events
           <textarea id="wcTimeline"></textarea>
         </label>
         <div class="button-row">
-          <button class="secondary" type="button" data-action="refresh-wc-evidence">Try another mock parse</button>
+          <button class="secondary" type="button" data-action="speak-wc-guidance">Read guidance aloud</button>
           <button class="primary" type="button" data-action="save-wc-review">Complaint details</button>
         </div>
       </section>
@@ -263,21 +353,25 @@
 
     <template id="wc-preview-template">
       <section class="panel">
-        <button class="ghost back" type="button" data-next="wcSuspect">Back</button>
+        <button class="ghost back" type="button" data-action="edit-wc-section" data-section="incidentDetails">Back to report</button>
         <p class="eyebrow">Preview and submit</p>
         <h2>Review your report</h2>
         <div id="wcPreviewContent" class="preview-grid"></div>
-        <label class="inline-check certification"><input id="wcCertify" type="checkbox" /> I confirm this demo report is ready to submit.</label>
-        <button class="primary" type="button" data-action="submit-wc-report">Submit demo report</button>
+        <label class="inline-check certification"><input id="wcCertify" type="checkbox" /> I confirm this report is ready for prototype submission.</label>
+        <button class="primary" type="button" data-action="submit-wc-report">Submit prototype report</button>
       </section>
     </template>
 
     <template id="wc-done-template">
       <section class="panel narrow success">
-        <p class="eyebrow">Mock submission complete</p>
+        <p class="eyebrow">Prototype submission complete</p>
         <h2>Report prepared</h2>
-        <p>Your demo report was completed in <strong id="wcFinalTime">00:00</strong>. No data was sent to the official portal.</p>
-        <button class="primary" type="button" data-action="go-home">Start another demo</button>
+        <p>Your report was completed in <strong id="wcFinalTime">00:00</strong>. No data was sent to the official portal.</p>
+        <aside class="danger-card" aria-label="Real-world safety next steps">
+          <strong>This prototype cannot provide emergency help</strong>
+          <span>For immediate danger call <a href="tel:112">112</a>. For a real cybercrime report, use <a href="https://www.cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>.</span>
+        </aside>
+        <button class="primary" type="button" data-action="go-home">Start another report</button>
       </section>
     </template>
 
@@ -287,11 +381,11 @@
         <p class="eyebrow">Financial crime report</p>
         <h2>Continue as</h2>
         <div class="two-actions">
-          <button class="choice-card" type="button" data-next="existingLogin">
+          <button class="choice-card" type="button" data-action="start-existing-financial">
             <span class="choice-icon" aria-hidden="true">↻</span>
             <span><strong>Existing User</strong><small>Use mobile OTP to continue</small></span>
           </button>
-          <button class="choice-card primary-choice" type="button" data-next="newUser">
+          <button class="choice-card primary-choice" type="button" data-action="start-new-financial">
             <span class="choice-icon" aria-hidden="true">+</span>
             <span><strong>New User</strong><small>Prefill profile from Aadhaar or enter manually</small></span>
           </button>
@@ -305,13 +399,13 @@
         <p class="eyebrow">Mock login</p>
         <h2>Verify your mobile number</h2>
         <label>Mobile number
-          <input id="mobileInput" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+          <input id="mobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
         </label>
         <button class="secondary" type="button" data-action="send-otp">Get OTP</button>
         <div id="otpArea" class="hidden">
-          <p class="hint">Demo OTP sent: <strong>123456</strong></p>
+          <p class="hint">Mocked OTP sent: <strong>123456</strong></p>
           <label>Enter OTP
-            <input id="otpInput" inputmode="numeric" maxlength="6" placeholder="123456" />
+            <input id="otpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
           </label>
           <button class="primary" type="button" data-action="verify-otp">Verify and continue</button>
         </div>
@@ -322,142 +416,138 @@
       <section class="panel">
         <button class="ghost back" type="button" data-next="userType">Back</button>
         <p class="eyebrow">One-time profile setup</p>
-        <h2>Upload Aadhaar or enter details manually</h2>
+        <h2>Tell us who is reporting</h2>
+        <p class="support-note">A synthetic identity document is required for this prototype sign-up. Never upload a real Aadhaar, PAN card, driving licence, or voter ID here.</p>
+        <label>Identity document type
+          <select id="reporterIdentityType">
+            <option value="Aadhaar">Aadhaar</option>
+            <option value="PAN card">PAN card</option>
+            <option value="Driving licence">Driving licence</option>
+            <option value="Voter ID">Voter ID</option>
+          </select>
+        </label>
         <div class="upload-zone">
-          <input id="aadhaarUpload" type="file" accept="image/*,.pdf" />
+          <input id="reporterIdentityUpload" type="file" accept="image/*,.pdf" />
           <div>
-            <strong>Aadhaar image or PDF</strong>
-            <span>Used only for mocked extraction in this demo, then discarded from app state.</span>
+            <strong>Synthetic identity image or PDF</strong>
+            <span>Kept only in this browser session so you can review it in Personal Details.</span>
           </div>
-          <button class="secondary" type="button" data-action="mock-aadhaar">Mock extract</button>
+          <button class="secondary" type="button" data-action="process-profile">Extract identity details</button>
         </div>
+        <div id="signupIdentityDocument" class="document-display"></div>
         <div class="form-grid profile-form"></div>
         <div class="button-row">
-          <button class="secondary" type="button" data-action="fill-profile">Use sample details</button>
+          <button class="secondary" type="button" data-action="fill-profile">Use synthetic identity sample</button>
           <button class="primary" type="button" data-action="save-profile">Review prerequisites</button>
         </div>
       </section>
     </template>
 
     <template id="prereq-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="newUser">Back</button>
+      <section class="panel prereq-panel">
+        <button class="ghost back" type="button" data-action="financial-prereq-back">Back</button>
         <p class="eyebrow">Before you start</p>
-        <h2>Keep these ready</h2>
-        <div class="checklist">
-          <label><input type="checkbox" checked /> Incident date and time</label>
-          <label><input type="checkbox" checked /> Bank / wallet / merchant name</label>
-          <label><input type="checkbox" checked /> 12-digit Transaction ID / UTR No.</label>
-          <label><input type="checkbox" checked /> Fraud amount</label>
-          <label><input type="checkbox" checked /> National ID soft copy</label>
-          <label><input type="checkbox" checked /> Evidence screenshots, receipts, SMS, or bank snippets</label>
-        </div>
-        <div class="upload-zone evidence-zone">
-          <input id="evidenceUpload" type="file" accept="image/*,.pdf" multiple />
-          <div>
-            <strong>Common evidence upload</strong>
-            <span>Upload screenshots once. The demo will prefill transaction fields.</span>
+        <h2>Keep these details ready</h2>
+        <p class="support-note">Do not worry if something is missing. Add the evidence you already have and review every prepared detail before prototype submission.</p>
+        <div class="prereq-layout">
+          <div class="prereq-list">
+            <h3 id="detailsReadyHeading">Information you may need</h3>
+            <ul class="ready-list">
+              <li>Incident date and approximate time</li>
+              <li>Bank, wallet, or payment app name</li>
+              <li>Transaction ID or 12-digit UTR</li>
+              <li>Transaction date and fraud amount</li>
+              <li id="reporterIdentityReadiness">Reporter’s government-issued identity document</li>
+              <li>A separate affected-person ID if reporting for someone else</li>
+              <li>Any other information you remember</li>
+            </ul>
+            <p class="hint">You can correct or complete missing information in the report.</p>
           </div>
-          <button class="secondary" type="button" data-action="mock-evidence">Parse evidence</button>
+          <div class="or-divider" aria-hidden="true"><span>or</span></div>
+          <div class="evidence-card">
+            <h3>Let AI prepare a starting draft</h3>
+            <ul class="evidence-examples">
+              <li>Payment screenshots or bank SMS</li>
+              <li>Transaction receipts or statements</li>
+              <li>Fraud-related screenshots or documents</li>
+            </ul>
+            <label class="file-drop">
+              <input id="evidenceUpload" type="file" accept="image/*,.pdf,.docx,.xlsx,.csv" multiple aria-describedby="financialUploadHelp selectedFinancialFiles" />
+              <span class="file-drop-icon" aria-hidden="true">↑</span>
+              <strong>Choose evidence files</strong>
+              <small id="financialUploadHelp">PNG, JPG, PDF, DOCX, XLSX or CSV · Up to 4 MB total</small>
+            </label>
+            <p id="selectedFinancialFiles" class="selected-files" aria-live="polite">No files selected</p>
+            <details class="other-inputs">
+              <summary>Other ways to share evidence</summary>
+              <label>Paste a bank SMS, message, URL, or notes
+                <textarea id="financialPastedText" rows="3" placeholder="Example: INR 24,500 debited via UPI. UTR 409812345678."></textarea>
+              </label>
+              <label>Upload a voice note
+                <input id="financialAudioUpload" type="file" accept="audio/*,.m4a,.webm" />
+              </label>
+            </details>
+            <div class="processing-state hidden" id="financialProcessingState" role="status" aria-live="polite"></div>
+            <div class="button-stack">
+              <button id="prepareFinancialButton" class="primary" type="button" data-action="process-financial-evidence" disabled>Prepare report from evidence</button>
+              <button class="secondary" type="button" data-action="mock-evidence-and-continue">Use synthetic sample</button>
+            </div>
+            <small class="privacy-line">Files are processed for this draft and are not intentionally stored.</small>
+          </div>
         </div>
-        <button class="primary" type="button" data-action="mock-evidence">Continue with mock extraction</button>
       </section>
     </template>
 
-    <template id="extraction-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="prereq">Back</button>
-        <p class="eyebrow">AI extraction review</p>
-        <h2>Confirm extracted transaction details</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Field</th>
-                <th>Extracted value</th>
-              </tr>
-            </thead>
-            <tbody id="transactionReview"></tbody>
-          </table>
-        </div>
-        <button class="link-button" type="button" data-action="add-transaction">Add another transaction</button>
-        <div class="button-row">
-          <button class="secondary" type="button" data-action="refresh-evidence">Try another mock parse</button>
-          <button class="primary" type="button" data-action="save-transaction">Complaint details</button>
-        </div>
-      </section>
-    </template>
-
-    <template id="complaint-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="extraction">Back</button>
-        <p class="eyebrow">Citizen confirmation</p>
-        <h2>Complaint details</h2>
-        <div class="form-grid complaint-form"></div>
-        <label class="wide-field">Incident description
-          <textarea id="incidentDescription" minlength="200" maxlength="1500"></textarea>
-          <small id="descriptionCount">0 / 200 minimum</small>
-        </label>
-        <button class="primary" type="button" data-action="save-complaint">Transaction details</button>
-      </section>
-    </template>
-
-    <template id="transactions-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="complaint">Back</button>
-        <p class="eyebrow">Transaction details</p>
-        <h2>Edit or add transaction records</h2>
-        <div id="transactionForms"></div>
-        <button class="link-button" type="button" data-action="add-transaction-form">Add transaction</button>
-        <button class="primary" type="button" data-action="save-transactions">Suspect details</button>
-      </section>
-    </template>
-
-    <template id="suspect-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="transactions">Back</button>
-        <p class="eyebrow">Optional</p>
-        <h2>Suspect details</h2>
-        <label class="inline-check"><input id="shareSuspect" type="checkbox" /> I have suspect details to share</label>
-        <div class="form-grid suspect-form muted-section"></div>
-        <button class="primary" type="button" data-action="save-suspect">Complainant details</button>
-      </section>
-    </template>
-
-    <template id="complainant-template">
-      <section class="panel">
-        <button class="ghost back" type="button" data-next="suspect">Back</button>
-        <p class="eyebrow">Pre-filled profile</p>
-        <h2>Complainant details</h2>
-        <div class="form-grid complainant-form"></div>
-        <label class="upload-zone compact-upload">
-          <input type="file" accept="image/*,.pdf" />
-          <span><strong>Upload National ID of victim</strong><small>Required in the real portal; mocked here.</small></span>
-        </label>
-        <button class="primary" type="button" data-action="save-complainant">Preview report</button>
+    <template id="financial-workspace-template">
+      <section class="report-workspace">
+        <aside class="report-sidebar" aria-label="Financial report sections">
+          <button class="ghost workspace-back" type="button" data-action="back-to-evidence">Back to evidence</button>
+          <p class="eyebrow">Your report</p>
+          <nav class="section-nav" aria-label="Financial report section navigation">
+            <button type="button" data-report-section="myDetails"><span>1</span><strong>Personal Details</strong><small>About the complainant</small></button>
+            <button type="button" data-report-section="incidentDetails"><span>2</span><strong>Incident Details</strong><small>What happened</small></button>
+            <button type="button" data-report-section="suspectDetails"><span>3</span><strong>Suspect Details</strong><small>Optional information</small></button>
+          </nav>
+          <p class="sidebar-help">Your changes stay in this browser only while you prepare the prototype report.</p>
+        </aside>
+        <div id="reportSectionContent" class="report-section"></div>
       </section>
     </template>
 
     <template id="preview-template">
       <section class="panel">
-        <button class="ghost back" type="button" data-next="complainant">Back</button>
+        <button class="ghost back" type="button" data-action="edit-report-section" data-section="suspectDetails">Back to report</button>
         <p class="eyebrow">Preview and submit</p>
         <h2>Review your report</h2>
+        <p class="support-note">Nothing has been sent. Check each section and return to edit anything that does not look right.</p>
         <div id="previewContent" class="preview-grid"></div>
-        <label class="inline-check certification"><input id="certify" type="checkbox" /> I confirm the information is correct for this demo submission.</label>
-        <button class="primary" type="button" data-action="submit-report">Confirm and submit</button>
+        <label class="inline-check certification"><input id="certify" type="checkbox" /> I confirm the information is correct for this prototype submission.</label>
+        <div class="button-row">
+          <button class="secondary" type="button" data-action="edit-report-section" data-section="myDetails">Edit report</button>
+          <button class="primary" type="button" data-action="submit-report">Submit prototype report</button>
+        </div>
       </section>
     </template>
 
     <template id="done-template">
       <section class="panel narrow success">
-        <p class="eyebrow">Mock submission complete</p>
-        <h2>Financial crime report prepared</h2>
-        <p>Your demo report was completed in <strong id="finalTime">00:00</strong>. No data was sent to the official portal.</p>
-        <button class="primary" type="button" data-action="go-home">Start another demo</button>
+        <p class="eyebrow">Prototype submission complete</p>
+        <h2>Your report is ready</h2>
+        <p>Your report was completed in <strong id="finalTime">00:00</strong>. No data was sent to the official portal.</p>
+        <div class="ack-card"><small>Sample acknowledgement</small><strong>NCCRP-FIN-2026-10482</strong></div>
+        <button class="primary download-button" type="button" data-action="download-report-pdf">Download report as PDF</button>
+        <p id="pdfStatus" class="hint" role="status" aria-live="polite"></p>
+        <aside class="urgent-card" aria-label="Next steps for a real report">
+          <strong>Next step for a real financial fraud</strong>
+          <span>Call <a href="tel:1930">1930</a> immediately, then complete the complaint on <a href="https://www.cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>. This prototype cannot submit it for you.</span>
+        </aside>
+        <div class="button-row centered">
+          <button class="secondary" type="button" data-next="trackingLookup">Track sample complaint</button>
+          <button class="primary" type="button" data-action="go-home">Start another report</button>
+        </div>
       </section>
     </template>
 
-    <script src="app.js"></script>
+    <script src="app.bundle.js"></script>
   </body>
 </html>

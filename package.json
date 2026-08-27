@@ -1,0 +1,33 @@
+{
+  "name": "nccrp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check app.js",
+    "build": "esbuild app.js --bundle --minify --format=iife --target=es2020 --outfile=app.bundle.js && esbuild pdf-entry.js --bundle --minify --format=iife --target=es2020 --outfile=pdf.bundle.js",
+    "test:browser": "node scripts/browser-smoke.mjs"
+  },
+  "keywords": [
+    "hackathon",
+    "accessibility",
+    "openai",
+    "public-service"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Supportive AI-assisted cybercrime reporting prototype",
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "fflate": "^0.8.3",
+    "jspdf": "^4.2.1",
+    "mammoth": "^1.12.1",
+    "openai": "^6.49.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.62.1"
+  }
+}
