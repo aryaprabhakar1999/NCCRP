@@ -21,7 +21,7 @@ export default async function handler(request, response) {
       return sendJson(response, 200, {
         ok: true,
         mode: "demo_fallback",
-        message: "OpenAI is not configured, so synthetic sample data was used.",
+        message: "OpenAI is not configured, so sample data was used.",
         data: fallbackFor(flowType),
       });
     }
@@ -41,7 +41,7 @@ export default async function handler(request, response) {
       return sendJson(response, 200, {
         ok: true,
         mode: "demo_fallback",
-        message: "Live extraction was unavailable, so synthetic sample data was used.",
+        message: "Live extraction was unavailable, so sample data was used.",
         data: fallbackFor(flowType),
       });
     }

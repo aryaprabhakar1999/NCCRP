@@ -28,6 +28,25 @@ body {
   color: var(--ink);
 }
 
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: min(560px, calc(100vw - 24px));
+  padding: 12px 18px;
+  background: #b42318;
+  color: #fff;
+  border: 1px solid #912018;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(180, 35, 24, 0.28);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 button,
 input,
 select,
@@ -121,6 +140,12 @@ a {
   text-decoration: none;
 }
 
+.auth-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .auth-button {
   min-height: 44px;
   padding: 8px 14px;
@@ -129,6 +154,21 @@ a {
   background: #eef7f4;
   color: var(--teal-dark);
   font-weight: 850;
+}
+
+.otp-block {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.otp-block.hidden {
+  display: none;
+}
+
+.panel.narrow > .secondary,
+.person-group > .secondary {
+  margin-top: 12px;
 }
 
 .auth-layout {
@@ -646,6 +686,13 @@ small,
   line-height: 1.45;
 }
 
+.upload-intro {
+  margin: 0 0 14px;
+  color: #33433e;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
 .ready-list li::marker {
   color: var(--teal);
 }
@@ -899,6 +946,20 @@ small,
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fbfdfc;
+}
+
+.reporting-user-details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.reporting-user-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reporting-user-details .workspace-profile-form,
+.reporting-user-details .document-display {
+  margin-top: 14px;
 }
 
 .person-group + .person-group {
@@ -1180,6 +1241,46 @@ td input {
   pointer-events: auto;
 }
 
+.warn-hint {
+  color: #912018;
+  font-weight: 700;
+}
+
+.suspect-id-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 14px 0;
+}
+
+.suspect-identity-list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.suspect-identity-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 10px;
+  background: #f7fbf9;
+}
+
+.suspect-identity-item strong {
+  min-width: 120px;
+}
+
+.suspect-identity-item .ghost {
+  margin-left: auto;
+}
+
 .preview-grid {
   display: grid;
   gap: 14px;
@@ -1430,6 +1531,10 @@ td input {
   .file-drop {
     min-height: 165px;
     padding: 20px 14px;
+  }
+
+  .suspect-id-row {
+    grid-template-columns: 1fr;
   }
 
   .report-workspace {

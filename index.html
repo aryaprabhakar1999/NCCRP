@@ -18,7 +18,10 @@
         </button>
         <div class="topbar-actions">
           <a class="urgent-link" href="tel:1930" aria-label="Call cybercrime helpline 1930">Call 1930</a>
-          <button id="authButton" class="auth-button" type="button" data-action="open-auth">Login / Sign up</button>
+          <div id="authControls" class="auth-controls">
+            <button id="loginButton" class="auth-button" type="button" data-action="open-login">Login</button>
+            <button id="signupButton" class="auth-button" type="button" data-action="open-signup">Sign up</button>
+          </div>
         </div>
       </header>
 
@@ -27,56 +30,78 @@
       <div id="globalStatus" class="sr-only" role="status" aria-live="polite"></div>
     </div>
 
-    <template id="auth-template">
+    <template id="login-template">
+      <section class="panel narrow">
+        <button class="ghost back" type="button" data-action="auth-back">Back</button>
+        <p class="eyebrow">Login</p>
+        <h2>Sign in with mobile OTP</h2>
+        <p class="support-note">Use any 10-digit mobile number and mocked OTP <strong>123456</strong>. Once signed in, filing and tracking will not ask you to log in again during this session.</p>
+        <label>Mobile number
+          <input id="loginMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+        </label>
+        <button class="secondary" type="button" data-action="send-login-otp">Get OTP</button>
+        <div id="loginOtpArea" class="hidden otp-block">
+          <p class="hint">Mocked OTP: <strong>123456</strong></p>
+          <label>Enter OTP
+            <input id="loginOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <button class="primary" type="button" data-action="verify-login-otp">Enter OTP</button>
+        </div>
+      </section>
+    </template>
+
+    <template id="signup-template">
       <section class="panel">
         <button class="ghost back" type="button" data-action="auth-back">Back</button>
-        <p class="eyebrow">Shared account</p>
-        <h2>Login / Sign up once</h2>
-        <p class="support-note">Use a mocked OTP and synthetic identity details. Once signed in, filing and tracking will not ask you to log in again during this session.</p>
-        <div class="auth-layout">
-          <section class="person-group" aria-labelledby="authMobileHeading">
-            <div class="person-group-heading">
-              <div><p class="eyebrow">Step 1</p><h3 id="authMobileHeading">Verify mobile</h3></div>
-            </div>
-            <label>Mobile number
-              <input id="authMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+        <p class="eyebrow">Sign up</p>
+        <h2>Create your reporting profile</h2>
+        <p class="support-note">Verify your mobile number, then upload an identity document to prepare personal details. This is a prototype session only.</p>
+        <section class="person-group" id="signupStep1" aria-labelledby="signupMobileHeading">
+          <div class="person-group-heading">
+            <div><p class="eyebrow">Step 1</p><h3 id="signupMobileHeading">Verify mobile</h3></div>
+            <span id="signupStep1Badge" class="role-badge hidden">Verified</span>
+          </div>
+          <label>Mobile number
+            <input id="signupMobileInput" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" />
+          </label>
+          <button id="sendSignupOtpButton" class="secondary" type="button" data-action="send-signup-otp">Get OTP</button>
+          <div id="signupOtpArea" class="hidden otp-block">
+            <p class="hint">Mocked OTP: <strong>123456</strong></p>
+            <label>Enter OTP
+              <input id="signupOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
             </label>
-            <button class="secondary" type="button" data-action="send-auth-otp">Get OTP</button>
-            <div id="authOtpArea" class="hidden">
-              <p class="hint">Mocked OTP: <strong>123456</strong></p>
-              <label>Enter OTP
-                <input id="authOtpInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
-              </label>
+            <button id="verifySignupOtpButton" class="primary" type="button" data-action="verify-signup-otp">Enter OTP</button>
+          </div>
+        </section>
+        <section id="signupIdentityArea" class="person-group hidden" aria-labelledby="signupIdentityHeading">
+          <div class="person-group-heading">
+            <div><p class="eyebrow">Step 2</p><h3 id="signupIdentityHeading">Add identity</h3></div>
+          </div>
+          <label>Identity document type
+            <select id="signupIdentityType">
+              <option value="Aadhaar">Aadhaar</option>
+              <option value="PAN card">PAN card</option>
+              <option value="Driving licence">Driving licence</option>
+              <option value="Voter ID">Voter ID</option>
+            </select>
+          </label>
+          <div class="upload-zone">
+            <input id="signupIdentityUpload" type="file" accept="image/*,.pdf" />
+            <div>
+              <strong>Upload identity document</strong>
+              <span>PNG, JPG, PDF · Up to 4 MB</span>
             </div>
-          </section>
-          <section class="person-group" aria-labelledby="authIdentityHeading">
-            <div class="person-group-heading">
-              <div><p class="eyebrow">Step 2</p><h3 id="authIdentityHeading">Add synthetic identity</h3></div>
-            </div>
-            <label>Identity document type
-              <select id="authIdentityType">
-                <option value="Aadhaar">Aadhaar</option>
-                <option value="PAN card">PAN card</option>
-                <option value="Driving licence">Driving licence</option>
-                <option value="Voter ID">Voter ID</option>
-              </select>
-            </label>
-            <div class="upload-zone">
-              <input id="authIdentityUpload" type="file" accept="image/*,.pdf" />
-              <div>
-                <strong>Synthetic identity image or PDF</strong>
-                <span>Retained only in this browser session for review.</span>
-              </div>
-              <button class="secondary" type="button" data-action="process-auth-profile">Extract identity details</button>
-            </div>
-            <div id="authIdentityDocument" class="document-display"></div>
-          </section>
-        </div>
-        <h3 class="form-section-title">Personal details</h3>
-        <div class="form-grid auth-profile-form"></div>
-        <div class="button-row">
-          <button class="secondary" type="button" data-action="fill-auth-profile">Use synthetic identity sample</button>
-          <button class="primary" type="button" data-action="complete-auth">Continue signed in</button>
+            <button class="secondary" type="button" data-action="process-signup-profile">Extract identity details</button>
+            <button class="secondary" type="button" data-action="fill-signup-profile">Use sample identity</button>
+          </div>
+          <div id="signupAuthIdentityDocument" class="document-display"></div>
+        </section>
+        <div id="signupProfileArea" class="hidden">
+          <h3 class="form-section-title">Personal details</h3>
+          <div class="form-grid signup-profile-form"></div>
+          <div class="button-row">
+            <button class="primary" type="button" data-action="save-signup">Save</button>
+          </div>
         </div>
       </section>
     </template>
@@ -130,7 +155,7 @@
         <button class="ghost back" type="button" data-action="go-home">Back</button>
         <p class="eyebrow">Complaint tracking</p>
         <h2>Track submitted complaints</h2>
-        <p class="support-note">This prototype shows synthetic statuses only. It does not connect to the official portal or retrieve real complaint data.</p>
+        <p class="support-note">This prototype shows sample statuses only. It does not connect to the official portal or retrieve real complaint data.</p>
         <div class="two-actions">
           <button class="choice-card primary-choice" type="button" data-next="trackingLookup">
             <span class="choice-icon" aria-hidden="true">#</span>
@@ -242,62 +267,79 @@
     </template>
 
     <template id="wc-start-template">
-      <section class="panel narrow">
+      <section class="panel prereq-panel">
         <button class="ghost back" type="button" data-next="womenChildren">Back</button>
         <p class="eyebrow" id="wcModeLabel">Anonymous report</p>
-        <h2>Start in the way that feels easiest</h2>
-        <p class="support-note">You do not have to write everything from memory. You can upload screenshots first and review a prepared draft, or start manually and add only what you know.</p>
-        <div class="two-actions">
-          <button class="choice-card primary-choice" type="button" data-next="wcEvidence">
-            <span class="choice-icon" aria-hidden="true">↑</span>
-            <span><strong>Upload evidence first</strong><small>Let mocked AI prepare the timeline and description</small></span>
-          </button>
-          <button class="choice-card" type="button" data-action="start-wc-manual">
-            <span class="choice-icon" aria-hidden="true">✎</span>
-            <span><strong>Start manually</strong><small>Fill only the complaint fields needed for preview</small></span>
-          </button>
+        <h2>Keep these details ready</h2>
+        <p class="support-note">Do not worry if something is missing. Add the evidence you already have and review every prepared detail before prototype submission.</p>
+        <div class="prereq-layout">
+          <div class="prereq-list">
+            <h3>Information you may need</h3>
+            <ul class="ready-list">
+              <li>Approximate date and time of the incident</li>
+              <li>Platform, app, or website where it happened</li>
+              <li>Usernames, profile links, or phone numbers involved</li>
+              <li>Screenshots of conversations or threats</li>
+              <li>Any related photos, videos, or documents</li>
+              <li>Only the personal details you feel safe sharing</li>
+            </ul>
+            <p class="hint">You can correct or complete missing information in the report.</p>
+          </div>
+          <div class="or-divider" aria-hidden="true"><span>or</span></div>
+          <div class="evidence-card">
+            <h3>Let AI prepare a starting draft</h3>
+            <p class="upload-intro">Upload screenshots of conversations, bank statements, photos, videos, documents, or voice notes. Add what you already have—you can review everything before continuing.</p>
+            <ul class="evidence-examples">
+              <li>Documents (PDF, DOCX, XLSX, CSV)</li>
+              <li>Screenshots and photos (PNG, JPG)</li>
+              <li>Videos (MP4, WEBM)</li>
+              <li>Voice notes (M4A, WEBM, MP3)</li>
+            </ul>
+            <label class="file-drop">
+              <input id="wcEvidenceUpload" type="file" accept="image/*,video/*,.pdf,.docx,.xlsx,.csv,.mp4,.webm" multiple aria-describedby="wcUploadHelp selectedWcFiles" />
+              <span class="file-drop-icon" aria-hidden="true">↑</span>
+              <strong>Choose documents, screenshots, or videos</strong>
+              <small id="wcUploadHelp">PNG, JPG, PDF, DOCX, XLSX, CSV, MP4, WEBM · Up to 4 MB total</small>
+            </label>
+            <p id="selectedWcFiles" class="selected-files" aria-live="polite">No files selected</p>
+            <details class="other-inputs">
+              <summary>Other ways to share evidence</summary>
+              <label>Paste a message, link, or notes
+                <textarea id="wcPastedText" rows="3" placeholder="Paste only what you are comfortable sharing."></textarea>
+              </label>
+              <label>Upload a voice note
+                <input id="wcAudioUpload" type="file" accept="audio/*,.m4a,.webm,.mp3" />
+              </label>
+            </details>
+            <div class="processing-state hidden" id="wcProcessingState" role="status" aria-live="polite"></div>
+            <div class="button-stack">
+              <button id="prepareWcButton" class="primary" type="button" data-action="process-wc-evidence" disabled>Prepare report from evidence</button>
+              <button class="secondary" type="button" data-action="mock-wc-evidence">Use sample</button>
+              <button class="secondary" type="button" data-action="start-wc-manual">Enter details manually</button>
+            </div>
+            <small class="privacy-line">Files are processed for this draft and are not intentionally stored.</small>
+          </div>
         </div>
       </section>
     </template>
 
     <template id="wc-evidence-template">
-      <section class="panel">
+      <section class="panel narrow">
         <button class="ghost back" type="button" data-next="wcStart">Back</button>
-        <p class="eyebrow">Evidence upload</p>
-        <h2>Share what you already have</h2>
-        <p class="support-note">You do not need to retell everything. Add screenshots, a document, a link, notes, or a voice note. Files are retained only in this browser session for review.</p>
-        <div class="upload-zone evidence-zone">
-          <input id="wcEvidenceUpload" type="file" accept="image/*,.pdf,.docx,.xlsx,.csv" multiple aria-describedby="wcUploadHelp" />
-          <div>
-            <strong>Add screenshots or documents</strong>
-            <span id="wcUploadHelp">PNG, JPG, PDF, DOCX, XLSX or CSV. Up to 4 MB total.</span>
-          </div>
-        </div>
-        <label class="wide-field">Paste a message, link, or notes (optional)
-          <textarea id="wcPastedText" rows="4" placeholder="Paste only what you are comfortable sharing."></textarea>
-        </label>
-        <label class="upload-zone compact-upload">
-          <input id="wcAudioUpload" type="file" accept="audio/*,.m4a,.webm" />
-          <span><strong>Add a voice note (optional)</strong><small>Speak in your own words. You can review the transcript.</small></span>
-        </label>
-        <div class="processing-state hidden" id="wcProcessingState" role="status" aria-live="polite"></div>
-        <div class="button-row">
-          <button class="secondary" type="button" data-action="mock-wc-evidence">Use synthetic sample</button>
-          <button class="primary" type="button" data-action="process-wc-evidence">Prepare my report</button>
-        </div>
+        <p class="eyebrow">Evidence</p>
+        <h2>Continue from prerequisites</h2>
+        <p class="support-note">Evidence upload now starts on the prerequisites page.</p>
+        <button class="primary" type="button" data-next="wcStart">Go to prerequisites</button>
       </section>
     </template>
 
     <template id="wc-workspace-template">
       <section class="report-workspace">
         <aside class="report-sidebar" aria-label="Women and children report sections">
-          <button class="ghost workspace-back" type="button" data-next="wcEvidence">Back to evidence</button>
+          <button class="ghost workspace-back" type="button" data-action="back-to-wc-evidence">Back to evidence</button>
           <p class="eyebrow">Your report</p>
-          <nav class="section-nav wc-section-nav" aria-label="Women and children report section navigation">
-            <button type="button" data-wc-section="personalDetails"><span>1</span><strong>Personal Details</strong><small>Anonymous or signed in</small></button>
-            <button type="button" data-wc-section="incidentDetails"><span>2</span><strong>Incident Details</strong><small>What happened</small></button>
-          </nav>
-          <p class="sidebar-help">You can stay anonymous. Share only what feels safe.</p>
+          <nav id="wcSectionNav" class="section-nav wc-section-nav" aria-label="Women and children report section navigation"></nav>
+          <p id="wcSidebarHelp" class="sidebar-help">You can stay anonymous. Share only what feels safe.</p>
         </aside>
         <div id="wcSectionContent" class="report-section"></div>
       </section>
@@ -353,7 +395,7 @@
 
     <template id="wc-preview-template">
       <section class="panel">
-        <button class="ghost back" type="button" data-action="edit-wc-section" data-section="incidentDetails">Back to report</button>
+        <button class="ghost back" type="button" data-action="edit-wc-section" data-section="suspectDetails">Back to report</button>
         <p class="eyebrow">Preview and submit</p>
         <h2>Review your report</h2>
         <div id="wcPreviewContent" class="preview-grid"></div>
@@ -387,7 +429,7 @@
           </button>
           <button class="choice-card primary-choice" type="button" data-action="start-new-financial">
             <span class="choice-icon" aria-hidden="true">+</span>
-            <span><strong>New User</strong><small>Prefill profile from Aadhaar or enter manually</small></span>
+            <span><strong>New User</strong><small>Sign up with mobile OTP and identity details</small></span>
           </button>
         </div>
       </section>
@@ -417,7 +459,7 @@
         <button class="ghost back" type="button" data-next="userType">Back</button>
         <p class="eyebrow">One-time profile setup</p>
         <h2>Tell us who is reporting</h2>
-        <p class="support-note">A synthetic identity document is required for this prototype sign-up. Never upload a real Aadhaar, PAN card, driving licence, or voter ID here.</p>
+        <p class="support-note">Upload an identity document to prepare personal details for this prototype. Do not upload a real Aadhaar, PAN card, driving licence, or voter ID here.</p>
         <label>Identity document type
           <select id="reporterIdentityType">
             <option value="Aadhaar">Aadhaar</option>
@@ -429,16 +471,17 @@
         <div class="upload-zone">
           <input id="reporterIdentityUpload" type="file" accept="image/*,.pdf" />
           <div>
-            <strong>Synthetic identity image or PDF</strong>
-            <span>Kept only in this browser session so you can review it in Personal Details.</span>
+            <strong>Upload identity document</strong>
+            <span>PNG, JPG, PDF · Up to 4 MB</span>
           </div>
           <button class="secondary" type="button" data-action="process-profile">Extract identity details</button>
         </div>
         <div id="signupIdentityDocument" class="document-display"></div>
-        <div class="form-grid profile-form"></div>
-        <div class="button-row">
-          <button class="secondary" type="button" data-action="fill-profile">Use synthetic identity sample</button>
-          <button class="primary" type="button" data-action="save-profile">Review prerequisites</button>
+        <div id="newUserProfileArea" class="hidden">
+          <div class="form-grid profile-form"></div>
+          <div class="button-row">
+            <button class="primary" type="button" data-action="save-profile">Save</button>
+          </div>
         </div>
       </section>
     </template>
@@ -466,16 +509,18 @@
           <div class="or-divider" aria-hidden="true"><span>or</span></div>
           <div class="evidence-card">
             <h3>Let AI prepare a starting draft</h3>
+            <p class="upload-intro">Upload screenshots of conversations, bank statements, photos, videos, documents, or voice notes. Add what you already have—you can review everything before continuing.</p>
             <ul class="evidence-examples">
-              <li>Payment screenshots or bank SMS</li>
-              <li>Transaction receipts or statements</li>
-              <li>Fraud-related screenshots or documents</li>
+              <li>Documents (PDF, DOCX, XLSX, CSV)</li>
+              <li>Screenshots and photos (PNG, JPG)</li>
+              <li>Videos (MP4, WEBM)</li>
+              <li>Voice notes (M4A, WEBM, MP3)</li>
             </ul>
             <label class="file-drop">
-              <input id="evidenceUpload" type="file" accept="image/*,.pdf,.docx,.xlsx,.csv" multiple aria-describedby="financialUploadHelp selectedFinancialFiles" />
+              <input id="evidenceUpload" type="file" accept="image/*,video/*,.pdf,.docx,.xlsx,.csv,.mp4,.webm" multiple aria-describedby="financialUploadHelp selectedFinancialFiles" />
               <span class="file-drop-icon" aria-hidden="true">↑</span>
-              <strong>Choose evidence files</strong>
-              <small id="financialUploadHelp">PNG, JPG, PDF, DOCX, XLSX or CSV · Up to 4 MB total</small>
+              <strong>Choose documents, screenshots, or videos</strong>
+              <small id="financialUploadHelp">PNG, JPG, PDF, DOCX, XLSX, CSV, MP4, WEBM · Up to 4 MB total</small>
             </label>
             <p id="selectedFinancialFiles" class="selected-files" aria-live="polite">No files selected</p>
             <details class="other-inputs">
@@ -484,13 +529,14 @@
                 <textarea id="financialPastedText" rows="3" placeholder="Example: INR 24,500 debited via UPI. UTR 409812345678."></textarea>
               </label>
               <label>Upload a voice note
-                <input id="financialAudioUpload" type="file" accept="audio/*,.m4a,.webm" />
+                <input id="financialAudioUpload" type="file" accept="audio/*,.m4a,.webm,.mp3" />
               </label>
             </details>
             <div class="processing-state hidden" id="financialProcessingState" role="status" aria-live="polite"></div>
             <div class="button-stack">
               <button id="prepareFinancialButton" class="primary" type="button" data-action="process-financial-evidence" disabled>Prepare report from evidence</button>
-              <button class="secondary" type="button" data-action="mock-evidence-and-continue">Use synthetic sample</button>
+              <button class="secondary" type="button" data-action="mock-evidence-and-continue">Use sample</button>
+              <button id="manualFinancialButton" class="secondary" type="button" data-action="manual-financial-continue">Enter details manually</button>
             </div>
             <small class="privacy-line">Files are processed for this draft and are not intentionally stored.</small>
           </div>

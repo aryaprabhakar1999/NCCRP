@@ -6,13 +6,13 @@ import { hasOpenAiKey, openAiClient } from "./_lib/openai.js";
 function fallbackAudio(flowType) {
   if (flowType === "women_children") {
     return {
-      transcript: "Synthetic voice note: I want to report repeated unwanted messages and threats from an Instagram account.",
+      transcript: "Voice note: I want to report repeated unwanted messages and threats from an Instagram account.",
       draftDescription: fallbackWomenChildren.complaint.description,
       extractedFields: {},
     };
   }
   return {
-    transcript: "Synthetic voice note: Twenty-four thousand five hundred rupees left my account through UPI without my permission.",
+    transcript: "Voice note: Twenty-four thousand five hundred rupees left my account through UPI without my permission.",
     draftDescription: fallbackFinancial.complaint.description,
     extractedFields: {},
   };
@@ -52,7 +52,7 @@ export default async function handler(request, response) {
       return sendJson(response, 200, {
         ok: true,
         mode: "demo_fallback",
-        message: "OpenAI is not configured, so a synthetic transcript was used.",
+        message: "OpenAI is not configured, so a sample transcript was used.",
         data: fallbackAudio(flowType),
       });
     }
@@ -77,7 +77,7 @@ export default async function handler(request, response) {
       return sendJson(response, 200, {
         ok: true,
         mode: "demo_fallback",
-        message: "Live transcription was unavailable, so a synthetic transcript was used.",
+        message: "Live transcription was unavailable, so a sample transcript was used.",
         data: fallbackAudio(flowType),
       });
     }

@@ -5,9 +5,9 @@ const globalStatus = document.querySelector("#globalStatus");
 const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const progressGroups = {
   financial: {
-    screens: ["userType", "existingLogin", "newUser", "prereq", "financialWorkspace", "preview", "done"],
+    screens: ["userType", "existingLogin", "newUser", "signup", "prereq", "financialWorkspace", "preview", "done"],
     steps: [
-      ["Start", ["userType", "existingLogin", "newUser"]],
+      ["Start", ["userType", "existingLogin", "newUser", "signup"]],
       ["Add evidence", ["prereq"]],
       ["Fill report", ["financialWorkspace"]],
       ["Finish", ["preview", "done"]],
@@ -16,8 +16,8 @@ const progressGroups = {
   womenChildren: {
     screens: ["womenChildren", "wcLogin", "wcStart", "wcEvidence", "wcWorkspace", "wcPreview", "wcDone"],
     steps: [
-      ["Start", ["womenChildren", "wcLogin", "wcStart"]],
-      ["Add evidence", ["wcEvidence"]],
+      ["Start", ["womenChildren", "wcLogin"]],
+      ["Add evidence", ["wcStart", "wcEvidence"]],
       ["Fill report", ["wcWorkspace"]],
       ["Finish", ["wcPreview", "wcDone"]],
     ],
@@ -25,7 +25,8 @@ const progressGroups = {
 };
 
 const screens = {
-  auth: "auth-template",
+  login: "login-template",
+  signup: "signup-template",
   home: "home-template",
   trackingHome: "tracking-home-template",
   trackingLookup: "tracking-lookup-template",
@@ -109,13 +110,6 @@ const transactionFields = [
   ["suspectAccount", "Do you have Suspect Account Details?", "select", ["No", "Yes"]],
 ];
 
-const suspectFields = [
-  ["suspectName", "Suspect Name"],
-  ["suspectIdType", "ID Type", "select", ["Mobile No.", "UPI ID", "Bank Account", "Email", "Social Profile", "Other"]],
-  ["suspectId", "ID Number"],
-  ["suspectAddress", "Suspect Address"],
-];
-
 const wcEvidenceFields = [
   ["suggestedCategory", "Suggested complaint category", "select", [
     "Rape / Gang Rape (RGR) - Sexually Abusive Content",
@@ -137,22 +131,46 @@ const wcComplaintFields = [
     "Sexually Explicit Act",
     "CSEAM - Child Sexual Exploitative and Abuse Material",
   ]],
-  ["date", "Approximate date of incident", "date"],
-  ["time", "Time", "time"],
-  ["delayReason", "Reason for delay in reporting"],
+  ["date", "Approximate date of incident / receiving / viewing of content", "date"],
+  ["time", "Approximate time", "time"],
+  ["delayReason", "Reason for delay in reporting", "text", undefined, { optional: true }],
   ["state", "State / UT"],
   ["district", "District"],
-  ["policeStation", "Police Station"],
+  ["policeStation", "Police Station", "text", undefined, { optional: true }],
   ["occurredAt", "Where did the incident occur?", "select", ["Email", "Facebook", "Instagram", "Snapchat", "Twitter", "WhatsApp", "Website URL", "YouTube", "LinkedIn", "Telegram", "Other"]],
 ];
 
-const wcSuspectFields = [
-  ["suspectName", "Suspect Name"],
-  ["suspectIdType", "ID Type", "select", ["Mobile No.", "Email", "Username", "Profile URL", "Other"]],
-  ["suspectId", "ID Number"],
-  ["shareAddress", "Share suspect address?", "select", ["No", "Yes"]],
-  ["suspectAddress", "Suspect Address"],
+const wcSuspectIdTypes = [
+  "Mobile No.",
+  "Email",
+  "Driving Licence",
+  "Aadhaar",
+  "PAN",
+  "Voter ID",
+  "Passport",
+  "Username",
+  "Profile URL",
+  "Other",
 ];
+
+function emptySuspectDetails() {
+  return {
+    suspectName: "",
+    identities: [],
+    draftIdType: "Driving Licence",
+    draftIdNumber: "",
+    photoName: "",
+    otherInfo: "",
+  };
+}
+
+function emptyWcSuspect() {
+  return emptySuspectDetails();
+}
+
+function activeSuspectStore() {
+  return state.current === "financialWorkspace" ? state.suspect : state.wc.suspect;
+}
 
 const sampleProfile = {
   title: "Miss",
@@ -281,6 +299,9 @@ const state = {
     isSignedIn: false,
     mobile: "",
     otpSent: false,
+    otpVerified: false,
+    profileReady: false,
+    mode: "login",
   },
   startedAt: Date.now(),
   reporter: { ...sampleProfile },
@@ -296,10 +317,7 @@ const state = {
   transactions: [{ ...mockTransactions[0] }],
   suspect: {
     hasDetails: false,
-    suspectName: "",
-    suspectIdType: "UPI ID",
-    suspectId: "",
-    suspectAddress: "",
+    ...emptySuspectDetails(),
   },
   financial: {
     entry: "existing",
@@ -344,14 +362,7 @@ const state = {
       occurredAt: "Instagram",
       description: "",
     },
-    suspect: {
-      hasDetails: false,
-      suspectName: "",
-      suspectIdType: "Username",
-      suspectId: "",
-      shareAddress: "No",
-      suspectAddress: "",
-    },
+    suspect: emptyWcSuspect(),
   },
   tracking: {
     loginMobile: "",
@@ -373,18 +384,19 @@ function render(screen) {
 
   if (screen === "trackingList") renderTrackingList();
   if (screen === "trackingDetail") renderTrackingDetail();
-  if (screen === "auth") renderAuth();
-  if (screen === "wcStart") renderWcStart();
+  if (screen === "login") renderLogin();
+  if (screen === "signup") renderSignup();
+  if (screen === "wcStart") {
+    renderWcStart();
+    setupWcPrerequisites();
+  }
   if (screen === "wcReview") renderWcReview();
   if (screen === "wcComplaint") renderWcComplaint();
   if (screen === "wcSuspect") renderWcSuspect();
   if (screen === "wcWorkspace") renderWcWorkspace();
   if (screen === "wcPreview") renderWcPreview();
   if (screen === "wcDone") document.querySelector("#wcFinalTime").textContent = formatElapsed();
-  if (screen === "newUser") {
-    renderForm(".profile-form", profileFields, state.reporter);
-    renderSignupIdentity();
-  }
+  if (screen === "newUser") renderNewUser();
   if (screen === "prereq") setupPrerequisites();
   if (screen === "financialWorkspace") renderFinancialWorkspace();
   if (screen === "preview") renderPreview();
@@ -421,9 +433,16 @@ function updateProgress(screen) {
 }
 
 function updateAuthButton() {
-  const button = document.querySelector("#authButton");
-  if (!button) return;
-  button.textContent = state.auth.isSignedIn ? `Signed in: ${state.auth.mobile || state.reporter.mobile}` : "Login / Sign up";
+  const controls = document.querySelector("#authControls");
+  if (!controls) return;
+  if (state.auth.isSignedIn) {
+    controls.innerHTML = `<button id="authButton" class="auth-button" type="button" data-action="open-login">Signed in: ${state.auth.mobile || state.reporter.mobile}</button>`;
+    return;
+  }
+  controls.innerHTML = `
+    <button id="loginButton" class="auth-button" type="button" data-action="open-login">Login</button>
+    <button id="signupButton" class="auth-button" type="button" data-action="open-signup">Sign up</button>
+  `;
 }
 
 function makeControl([key, label, type = "text", options, settings = {}], values, className = "") {
@@ -495,7 +514,7 @@ function retainIdentityDocument(role, file, type, demo = false) {
   releaseDocument(state.documents[role]);
   state.documents[role] = {
     type,
-    name: file?.name || `Synthetic ${type} sample.pdf`,
+    name: file?.name || `${type} sample.pdf`,
     size: file?.size || 0,
     file: file || null,
     previewUrl: file ? URL.createObjectURL(file) : "",
@@ -577,17 +596,67 @@ function renderDocumentDisplay(selector, docInfo, emptyText = "No document attac
 function renderSignupIdentity() {
   const type = document.querySelector("#reporterIdentityType");
   if (state.documents.reporter?.type) type.value = state.documents.reporter.type;
-  renderDocumentDisplay("#signupIdentityDocument", state.documents.reporter, "Upload a synthetic identity document to continue.");
+  renderDocumentDisplay("#signupIdentityDocument", state.documents.reporter, "Upload an identity document to continue.");
 }
 
-function renderAuth() {
-  renderForm(".auth-profile-form", profileFields, state.reporter);
-  const mobile = document.querySelector("#authMobileInput");
+function renderNewUser() {
+  renderSignupIdentity();
+  const profileArea = document.querySelector("#newUserProfileArea");
+  if (state.auth.profileReady) {
+    profileArea?.classList.remove("hidden");
+    renderForm(".profile-form", profileFields, state.reporter);
+  } else {
+    profileArea?.classList.add("hidden");
+  }
+}
+
+function renderLogin() {
+  const mobile = document.querySelector("#loginMobileInput");
+  mobile.value = state.auth.mobile || "";
+  if (state.auth.otpSent) document.querySelector("#loginOtpArea").classList.remove("hidden");
+}
+
+function renderSignup() {
+  const mobile = document.querySelector("#signupMobileInput");
   mobile.value = state.auth.mobile || state.reporter.mobile || "";
-  if (state.auth.otpSent) document.querySelector("#authOtpArea").classList.remove("hidden");
-  const type = document.querySelector("#authIdentityType");
-  if (state.documents.reporter?.type) type.value = state.documents.reporter.type;
-  renderDocumentDisplay("#authIdentityDocument", state.documents.reporter, "Use a synthetic identity document or sample details.");
+  if (state.auth.otpSent) document.querySelector("#signupOtpArea").classList.remove("hidden");
+  const identityArea = document.querySelector("#signupIdentityArea");
+  const profileArea = document.querySelector("#signupProfileArea");
+  const step1Badge = document.querySelector("#signupStep1Badge");
+  const step1Controls = [
+    mobile,
+    document.querySelector("#sendSignupOtpButton"),
+    document.querySelector("#signupOtpInput"),
+    document.querySelector("#verifySignupOtpButton"),
+  ];
+  if (state.auth.otpVerified) {
+    step1Controls.forEach((el) => {
+      if (el) el.disabled = true;
+    });
+    step1Badge?.classList.remove("hidden");
+    identityArea.classList.remove("hidden");
+    const type = document.querySelector("#signupIdentityType");
+    if (state.documents.reporter?.type) type.value = state.documents.reporter.type;
+    renderDocumentDisplay("#signupAuthIdentityDocument", state.documents.reporter, "Upload an identity document to continue.");
+    requestAnimationFrame(() => {
+      identityArea.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  } else {
+    step1Controls.forEach((el) => {
+      if (el) el.disabled = false;
+    });
+    step1Badge?.classList.add("hidden");
+    identityArea.classList.add("hidden");
+  }
+  if (state.auth.profileReady) {
+    profileArea.classList.remove("hidden");
+    renderForm(".signup-profile-form", profileFields, state.reporter);
+  } else {
+    profileArea.classList.add("hidden");
+  }
 }
 
 function setupPrerequisites() {
@@ -597,6 +666,7 @@ function setupPrerequisites() {
   const selected = document.querySelector("#selectedFinancialFiles");
   const prepare = document.querySelector("#prepareFinancialButton");
   const demo = document.querySelector('[data-action="mock-evidence-and-continue"]');
+  const manual = document.querySelector("#manualFinancialButton");
   const identityStatus = document.querySelector("#reporterIdentityReadiness");
   const reporterDocument = state.documents.reporter;
   identityStatus.textContent = reporterDocument
@@ -612,6 +682,7 @@ function setupPrerequisites() {
     const hasInput = files.files.length > 0 || audio.files.length > 0 || text.value.trim().length > 0;
     prepare.disabled = (!hasInput && !state.financial.evidenceReady) || !reporterDocument;
     demo.disabled = !reporterDocument;
+    if (manual) manual.disabled = !reporterDocument;
     if (state.financial.evidenceReady && !hasInput) prepare.textContent = "Continue to report";
   };
 
@@ -621,8 +692,53 @@ function setupPrerequisites() {
   update();
 }
 
+function setupWcPrerequisites() {
+  const files = document.querySelector("#wcEvidenceUpload");
+  const audio = document.querySelector("#wcAudioUpload");
+  const text = document.querySelector("#wcPastedText");
+  const selected = document.querySelector("#selectedWcFiles");
+  const prepare = document.querySelector("#prepareWcButton");
+  if (!files || !prepare) return;
+
+  const update = () => {
+    const fileList = [...files.files, ...(audio?.files || [])];
+    if (selected) {
+      selected.textContent = fileList.length
+        ? fileList.map((file) => `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)`).join(", ")
+        : "No files selected";
+    }
+    const hasInput = files.files.length > 0 || (audio?.files?.length || 0) > 0 || (text?.value.trim().length || 0) > 0;
+    prepare.disabled = !hasInput && !state.wc.evidenceReady;
+    if (state.wc.evidenceReady && !hasInput) prepare.textContent = "Continue to report";
+    else prepare.textContent = "Prepare report from evidence";
+  };
+
+  files.addEventListener("change", update);
+  audio?.addEventListener("change", update);
+  text?.addEventListener("input", update);
+  update();
+}
+
 function sectionMarkup(section) {
   if (section === "myDetails") {
+    const reportingUserBlock = `
+      <div class="person-group-heading">
+        <div><p class="eyebrow">Reporting user</p><h3 id="reporterDetailsHeading">Your details</h3></div>
+        <span class="role-badge">${state.financial.reportFor === "self" ? "Reporter and victim" : "Reporter"}</span>
+      </div>
+      <div class="form-grid complainant-form workspace-profile-form"></div>
+      <div id="reporterIdentityDocument" class="document-display"></div>
+    `;
+    const reporterSection = state.financial.reportFor === "other"
+      ? `<details class="person-group reporting-user-details">
+          <summary class="person-group-heading reporting-user-summary">
+            <div><p class="eyebrow">Reporting user</p><strong>Your details</strong></div>
+            <span class="role-badge">Reporter</span>
+          </summary>
+          <div class="form-grid complainant-form workspace-profile-form"></div>
+          <div id="reporterIdentityDocument" class="document-display"></div>
+        </details>`
+      : `<section class="person-group" aria-labelledby="reporterDetailsHeading">${reportingUserBlock}</section>`;
     const otherPersonFields = state.financial.reportFor === "other" ? `
       <section class="person-group" aria-labelledby="victimDetailsHeading">
         <div class="person-group-heading">
@@ -650,7 +766,7 @@ function sectionMarkup(section) {
               <option value="Voter ID">Voter ID</option>
             </select>
           </label>
-          <label>Attach synthetic affected-person ID
+          <label>Attach affected-person ID
             <input id="victimIdentityUpload" type="file" accept="image/*,.pdf" />
           </label>
         </div>
@@ -661,20 +777,13 @@ function sectionMarkup(section) {
     return `
       <p class="eyebrow">Section 1 of 3</p>
       <h2>Personal Details</h2>
-      <p class="section-intro">First tell us who was affected. This keeps the logged-in reporter separate from the victim when they are different people.</p>
+      <p class="section-intro">First tell us who was affected. This keeps the reporting user separate from the victim when they are different people.</p>
       <fieldset class="report-for-choice">
         <legend>Who was affected?</legend>
         <label><input type="radio" name="reportFor" value="self" ${state.financial.reportFor === "self" ? "checked" : ""} /> Me</label>
         <label><input type="radio" name="reportFor" value="other" ${state.financial.reportFor === "other" ? "checked" : ""} /> Another person</label>
       </fieldset>
-      <section class="person-group" aria-labelledby="reporterDetailsHeading">
-        <div class="person-group-heading">
-          <div><p class="eyebrow">Logged-in reporter</p><h3 id="reporterDetailsHeading">Your details</h3></div>
-          <span class="role-badge">${state.financial.reportFor === "self" ? "Reporter and victim" : "Reporter"}</span>
-        </div>
-        <div class="form-grid complainant-form workspace-profile-form"></div>
-        <div id="reporterIdentityDocument" class="document-display"></div>
-      </section>
+      ${reporterSection}
       ${otherPersonFields}
       <div class="section-actions">
         <button class="primary" type="button" data-action="continue-report-section" data-section="incidentDetails">Save and continue</button>
@@ -713,7 +822,9 @@ function sectionMarkup(section) {
     <h2>Suspect Details</h2>
     <p class="section-intro">Share only what you know. You can skip this section without blocking the report.</p>
     <label class="inline-check"><input id="shareSuspect" type="checkbox" /> I have suspect details to share</label>
-    <div class="form-grid suspect-form muted-section"></div>
+    <div id="financialSuspectFields" class="muted-section">
+      ${suspectDetailsFieldsMarkup()}
+    </div>
     <div class="section-actions">
       <button class="secondary" type="button" data-action="change-report-section" data-section="incidentDetails">Back</button>
       <button class="primary" type="button" data-action="preview-financial-report">Preview report</button>
@@ -764,7 +875,7 @@ function renderEvidenceDocuments() {
   if (!state.documents.evidence.length) {
     const empty = document.createElement("p");
     empty.className = "document-empty";
-    empty.textContent = state.ai.financial.mode === "demo_fallback" ? "Synthetic evidence sample" : "Evidence was provided as pasted text.";
+    empty.textContent = state.ai.financial.mode === "demo_fallback" ? "Sample evidence" : "Evidence was provided as pasted text.";
     holder.append(empty);
     return;
   }
@@ -775,57 +886,126 @@ function renderEvidenceDocuments() {
   });
 }
 
+function wcWorkspaceSections() {
+  if (state.wc.mode === "login" && state.auth.isSignedIn) {
+    return [
+      ["personalDetails", "Personal Details", "About you"],
+      ["incidentDetails", "Incident Details", "What happened"],
+      ["suspectDetails", "Suspect Details", "Optional information"],
+    ];
+  }
+  return [
+    ["incidentDetails", "Incident Details", "What happened"],
+    ["suspectDetails", "Suspect Details", "Optional information"],
+  ];
+}
+
+function wcDefaultSection() {
+  return state.wc.mode === "login" && state.auth.isSignedIn ? "personalDetails" : "incidentDetails";
+}
+
+function suspectDetailsFieldsMarkup() {
+  const idOptions = wcSuspectIdTypes.map((type) => `<option value="${type}">${type}</option>`).join("");
+  return `
+    <label>Suspect Name
+      <input id="wcSuspectName" type="text" autocomplete="off" />
+    </label>
+    <div class="suspect-id-row">
+      <label>ID Type
+        <select id="wcSuspectIdType">${idOptions}</select>
+      </label>
+      <label id="wcSuspectIdNumberWrap">
+        <span id="wcSuspectIdNumberLabel">Driving licence number</span>
+        <input id="wcSuspectIdNumber" type="text" autocomplete="off" />
+      </label>
+      <button class="secondary" type="button" data-action="add-wc-suspect-id">ADD</button>
+    </div>
+    <ul id="wcSuspectIdentityList" class="suspect-identity-list" aria-label="Added suspect identifiers"></ul>
+    <label class="wide-field">Please upload any photograph of suspect
+      <input id="wcSuspectPhotoUpload" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+      <small>Upload JPG/JPEG/PNG file of max 5 MB.</small>
+    </label>
+    <p id="wcSuspectPhotoName" class="selected-files">No file chosen</p>
+    <button class="secondary" type="button" data-action="upload-wc-suspect-photo">Upload</button>
+    <label class="wide-field">Any other information / details
+      <textarea id="wcSuspectOtherInfo" maxlength="250" rows="4"></textarea>
+      <small id="wcSuspectOtherCount">Maximum of 250 characters - 250 characters left.</small>
+    </label>
+  `;
+}
+
 function wcSectionMarkup(section) {
+  const sections = wcWorkspaceSections();
+  const index = Math.max(0, sections.findIndex(([id]) => id === section));
+  const total = sections.length;
+  const eyebrow = `Section ${index + 1} of ${total}`;
+
   if (section === "personalDetails") {
-    const signedIn = state.wc.mode === "login" && state.auth.isSignedIn;
     return `
-      <p class="eyebrow">Section 1 of 2</p>
+      <p class="eyebrow">${eyebrow}</p>
       <h2>Personal Details</h2>
       <aside class="danger-card" aria-label="Immediate danger guidance">
         <strong>Are you or someone else in immediate danger?</strong>
         <span>Call India’s emergency number <a href="tel:112">112</a>. This prototype cannot provide emergency help.</span>
       </aside>
-      <p class="section-intro">${signedIn ? "Your signed-in details are prefilled. You can still choose how much contact information appears in this report." : "You can stay anonymous. Add contact details only if you want them included in this prototype report."}</p>
-      <fieldset class="report-for-choice">
-        <legend>How do you want to file?</legend>
-        <label><input type="radio" name="wcModeChoice" value="anonymous" ${state.wc.mode === "anonymous" ? "checked" : ""} /> Anonymous</label>
-        <label><input type="radio" name="wcModeChoice" value="login" ${state.wc.mode === "login" ? "checked" : ""} /> Use signed-in details</label>
-      </fieldset>
+      <p class="section-intro">Your signed-in details are prefilled. You can still choose how much contact information appears in this report.</p>
       <div class="form-grid wc-personal-form"></div>
       <div class="section-actions">
         <button class="primary" type="button" data-action="continue-wc-section" data-section="incidentDetails">Save and continue</button>
       </div>
     `;
   }
+
+  if (section === "suspectDetails") {
+    const backSection = "incidentDetails";
+    return `
+      <p class="eyebrow">${eyebrow}</p>
+      <h2>Suspect Details</h2>
+      <p class="support-note">Please share the details of the suspect. Any information provided will be kept confidential and may help during the investigation.</p>
+      ${suspectDetailsFieldsMarkup()}
+      <div class="section-actions">
+        <button class="secondary" type="button" data-action="change-wc-section" data-section="${backSection}">Back</button>
+        <button class="primary" type="button" data-action="preview-wc-report">Preview report</button>
+      </div>
+    `;
+  }
+
+  const backSection = state.wc.mode === "login" && state.auth.isSignedIn ? "personalDetails" : "";
   return `
-    <p class="eyebrow">Section 2 of 2</p>
+    <p class="eyebrow">${eyebrow}</p>
     <h2>Incident Details</h2>
-    <div id="wcExtractionMode" class="mode-badge">AI prepared · Needs your review</div>
-    <p class="support-note">Everything below is editable. AI can make mistakes, and you can remove anything that does not feel safe to include.</p>
-    <section class="retained-evidence" aria-labelledby="wcRetainedEvidenceHeading">
-      <h3 id="wcRetainedEvidenceHeading">Attached evidence</h3>
-      <div id="wcEvidenceDocuments" class="document-grid"></div>
-    </section>
-    <h3 class="form-section-title">Evidence summary</h3>
-    <div class="form-grid wc-evidence-form"></div>
-    <label class="wide-field">Sequence of events
-      <textarea id="wcTimeline"></textarea>
-    </label>
-    <h3 class="form-section-title">Complaint details</h3>
+    <p class="support-note">Kindly fill in the form with details of the crime. Share only what feels safe.</p>
     <div class="form-grid wc-complaint-form"></div>
-    <label class="wide-field">Additional information about the incident
+    <label class="wide-field">Please provide any additional information about the incident
       <textarea id="wcDescription" minlength="200" maxlength="1500"></textarea>
-      <small id="wcDescriptionCount">0 / 200 minimum</small>
+      <small id="wcDescriptionCount">Insert at least 200 characters. Maximum 1500.</small>
     </label>
     <div class="section-actions">
-      <button class="secondary" type="button" data-action="change-wc-section" data-section="personalDetails">Back</button>
-      <button class="secondary" type="button" data-action="speak-wc-guidance">Read guidance aloud</button>
-      <button class="primary" type="button" data-action="preview-wc-report">Preview report</button>
+      ${backSection ? `<button class="secondary" type="button" data-action="change-wc-section" data-section="${backSection}">Back</button>` : ""}
+      <button class="primary" type="button" data-action="continue-wc-section" data-section="suspectDetails">Save and continue</button>
     </div>
   `;
 }
 
 function renderWcWorkspace() {
+  const allowed = wcWorkspaceSections().map(([id]) => id);
+  if (!allowed.includes(state.wc.activeSection)) state.wc.activeSection = wcDefaultSection();
+
+  const nav = document.querySelector("#wcSectionNav");
+  nav.replaceChildren(...wcWorkspaceSections().map(([id, label, hint], index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.wcSection = id;
+    button.innerHTML = `<span>${index + 1}</span><strong>${label}</strong><small>${hint}</small>`;
+    return button;
+  }));
+  const help = document.querySelector("#wcSidebarHelp");
+  if (help) {
+    help.textContent = state.wc.mode === "login" && state.auth.isSignedIn
+      ? "Review your signed-in details, then the incident and any suspect information."
+      : "You can stay anonymous. Share only what feels safe.";
+  }
+
   const content = document.querySelector("#wcSectionContent");
   content.innerHTML = wcSectionMarkup(state.wc.activeSection);
   document.querySelectorAll("[data-wc-section]").forEach((button) => {
@@ -839,34 +1019,30 @@ function renderWcWorkspace() {
   if (state.wc.activeSection === "personalDetails") {
     const fields = [
       ["shareIdentity", "Share identity in this report?", "select", ["No", "Yes"]],
-      ["name", "Name", "text", undefined, { optional: state.wc.mode === "anonymous" }],
+      ["name", "Name"],
       ["mobile", "Mobile No.", "tel", undefined, { optional: true }],
       ["email", "Email ID", "email", undefined, { optional: true }],
       ["state", "State / UT"],
       ["district", "District"],
     ];
-    if (state.wc.mode === "login" && state.auth.isSignedIn) {
-      state.wc.personal = {
-        ...state.wc.personal,
-        shareIdentity: "Yes",
-        name: state.reporter.name,
-        mobile: state.auth.mobile || state.reporter.mobile,
-        email: state.reporter.email,
-        state: state.reporter.state,
-        district: state.reporter.district,
-      };
-    }
+    state.wc.personal = {
+      ...state.wc.personal,
+      shareIdentity: "Yes",
+      name: state.reporter.name,
+      mobile: state.auth.mobile || state.reporter.mobile,
+      email: state.reporter.email,
+      state: state.reporter.state,
+      district: state.reporter.district,
+    };
     renderForm(".wc-personal-form", fields, state.wc.personal);
+  } else if (state.wc.activeSection === "suspectDetails") {
+    renderWcSuspect();
   } else {
-    updateModeBadge("#wcExtractionMode", state.ai.womenChildren);
-    renderForm(".wc-evidence-form", wcEvidenceFields, state.wc.evidence);
-    document.querySelector("#wcTimeline").value = state.wc.evidence.timeline || "";
     renderForm(".wc-complaint-form", wcComplaintFields, state.wc.complaint);
     const description = document.querySelector("#wcDescription");
     description.value = state.wc.complaint.description || draftWcDescription();
     updateWcDescriptionCount();
     description.addEventListener("input", updateWcDescriptionCount);
-    renderWcEvidenceDocuments();
   }
 }
 
@@ -877,7 +1053,7 @@ function renderWcEvidenceDocuments() {
   if (!state.documents.wcEvidence.length) {
     const empty = document.createElement("p");
     empty.className = "document-empty";
-    empty.textContent = state.ai.womenChildren.mode === "demo_fallback" ? "Synthetic evidence sample" : "Evidence was provided as pasted text.";
+    empty.textContent = state.ai.womenChildren.mode === "demo_fallback" ? "Sample evidence" : "Evidence was provided as pasted text.";
     holder.append(empty);
     return;
   }
@@ -896,10 +1072,10 @@ function saveWcSection(section, validate = true) {
       document.querySelector('[data-field="name"]')?.focus();
       return false;
     }
-  } else {
-    if (validate && (!validateRequired(".wc-evidence-form") || !validateRequired(".wc-complaint-form"))) return false;
-    collectForm(".wc-evidence-form", state.wc.evidence);
-    state.wc.evidence.timeline = document.querySelector("#wcTimeline").value.trim();
+  } else if (section === "suspectDetails") {
+    collectWcSuspectSection();
+  } else if (section === "incidentDetails") {
+    if (validate && !validateRequired(".wc-complaint-form")) return false;
     collectForm(".wc-complaint-form", state.wc.complaint);
     state.wc.complaint.description = document.querySelector("#wcDescription").value.trim();
     if (validate && state.wc.complaint.description.length < 200) {
@@ -913,6 +1089,8 @@ function saveWcSection(section, validate = true) {
 }
 
 function changeWcSection(nextSection, validateCurrent = true) {
+  const allowed = wcWorkspaceSections().map(([id]) => id);
+  if (!allowed.includes(nextSection)) nextSection = wcDefaultSection();
   if (!saveWcSection(state.wc.activeSection, validateCurrent)) return;
   state.wc.activeSection = nextSection;
   render("wcWorkspace");
@@ -934,7 +1112,7 @@ function saveFinancialSection(section, validate = true) {
     if (validate && !validateRequired(".workspace-profile-form")) return false;
     collectForm(".workspace-profile-form", state.reporter);
     if (validate && !state.documents.reporter) {
-      showMessage("Attach the reporter’s synthetic identity document before continuing.");
+      showMessage("Attach the reporter’s identity document before continuing.");
       document.querySelector("#reporterIdentityDocument")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return false;
     }
@@ -954,7 +1132,7 @@ function saveFinancialSection(section, validate = true) {
         return false;
       }
       if (validate && !state.documents.victim) {
-        showMessage("Attach a synthetic identity document for the affected person.");
+        showMessage("Attach an identity document for the affected person.");
         document.querySelector("#victimIdentityUpload")?.focus();
         return false;
       }
@@ -974,8 +1152,8 @@ function saveFinancialSection(section, validate = true) {
       return false;
     }
   } else {
-    state.suspect.hasDetails = document.querySelector("#shareSuspect").checked;
-    collectForm(".suspect-form", state.suspect);
+    state.suspect.hasDetails = document.querySelector("#shareSuspect")?.checked || false;
+    if (state.suspect.hasDetails) collectWcSuspectSection();
   }
   if (validate && !state.financial.completedSections.includes(section)) state.financial.completedSections.push(section);
   return true;
@@ -1036,15 +1214,16 @@ function renderTransactionForms() {
 }
 
 function renderSuspect() {
-  renderForm(".suspect-form", suspectFields, state.suspect);
   const checkbox = document.querySelector("#shareSuspect");
-  const form = document.querySelector(".suspect-form");
+  const fields = document.querySelector("#financialSuspectFields");
+  if (!checkbox || !fields) return;
   checkbox.checked = state.suspect.hasDetails;
-  form.classList.toggle("active", checkbox.checked);
+  fields.classList.toggle("active", checkbox.checked);
   checkbox.addEventListener("change", () => {
     state.suspect.hasDetails = checkbox.checked;
-    form.classList.toggle("active", checkbox.checked);
+    fields.classList.toggle("active", checkbox.checked);
   });
+  if (state.suspect.hasDetails) renderWcSuspect();
 }
 
 function renderWcStart() {
@@ -1062,7 +1241,7 @@ function updateModeBadge(selector, aiState) {
   const badge = document.querySelector(selector);
   if (!badge) return;
   const isLive = aiState.mode === "live_openai";
-  badge.textContent = isLive ? "AI prepared · Needs your review" : "Synthetic sample · Needs your review";
+  badge.textContent = isLive ? "AI prepared · Needs your review" : "Sample · Needs your review";
   badge.classList.toggle("demo", !isLive);
 }
 
@@ -1075,40 +1254,116 @@ function renderWcComplaint() {
   description.addEventListener("input", updateWcDescriptionCount);
 }
 
-function renderWcSuspect() {
-  renderForm(".wc-suspect-form", wcSuspectFields, state.wc.suspect);
-  const checkbox = document.querySelector("#wcShareSuspect");
-  const form = document.querySelector(".wc-suspect-form");
-  const photo = document.querySelector("#wcSuspectPhoto");
-  checkbox.checked = state.wc.suspect.hasDetails;
-  form.classList.toggle("active", checkbox.checked);
-  photo.classList.toggle("active", checkbox.checked);
-  checkbox.addEventListener("change", () => {
-    state.wc.suspect.hasDetails = checkbox.checked;
-    form.classList.toggle("active", checkbox.checked);
-    photo.classList.toggle("active", checkbox.checked);
+function wcSuspectIdNumberLabel(type) {
+  const labels = {
+    "Mobile No.": "Mobile number",
+    Email: "Email address",
+    "Driving Licence": "Driving licence number",
+    Aadhaar: "Aadhaar number",
+    PAN: "PAN number",
+    "Voter ID": "Voter ID number",
+    Passport: "Passport number",
+    Username: "Username",
+    "Profile URL": "Profile URL",
+    Other: "ID number",
+  };
+  return labels[type] || "ID number";
+}
+
+function collectWcSuspectSection() {
+  const store = activeSuspectStore();
+  const name = document.querySelector("#wcSuspectName");
+  const other = document.querySelector("#wcSuspectOtherInfo");
+  const idType = document.querySelector("#wcSuspectIdType");
+  const idNumber = document.querySelector("#wcSuspectIdNumber");
+  if (name) store.suspectName = name.value.trim();
+  if (other) store.otherInfo = other.value.trim();
+  if (idType) store.draftIdType = idType.value;
+  if (idNumber) store.draftIdNumber = idNumber.value.trim();
+}
+
+function updateWcSuspectOtherCount() {
+  const other = document.querySelector("#wcSuspectOtherInfo");
+  const count = document.querySelector("#wcSuspectOtherCount");
+  if (!other || !count) return;
+  const remaining = Math.max(0, 250 - other.value.length);
+  count.textContent = `Maximum of 250 characters - ${remaining} characters left.`;
+}
+
+function renderWcSuspectIdentityList() {
+  const list = document.querySelector("#wcSuspectIdentityList");
+  const store = activeSuspectStore();
+  if (!list) return;
+  list.replaceChildren();
+  if (!store.identities.length) {
+    const empty = document.createElement("li");
+    empty.className = "document-empty";
+    empty.textContent = "No suspect identifiers added yet.";
+    list.append(empty);
+    return;
+  }
+  store.identities.forEach((item, index) => {
+    const row = document.createElement("li");
+    row.className = "suspect-identity-item";
+    row.innerHTML = `<strong>${item.idType}</strong><span>${item.idNumber}</span>`;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "ghost";
+    remove.textContent = "Remove";
+    remove.dataset.action = "remove-wc-suspect-id";
+    remove.dataset.index = String(index);
+    row.append(remove);
+    list.append(row);
   });
+}
+
+function renderWcSuspect() {
+  const store = activeSuspectStore();
+  const name = document.querySelector("#wcSuspectName");
+  const idType = document.querySelector("#wcSuspectIdType");
+  const idNumber = document.querySelector("#wcSuspectIdNumber");
+  const idLabel = document.querySelector("#wcSuspectIdNumberLabel");
+  const other = document.querySelector("#wcSuspectOtherInfo");
+  const photoName = document.querySelector("#wcSuspectPhotoName");
+  if (name) name.value = store.suspectName || "";
+  if (idType) idType.value = store.draftIdType || "Driving Licence";
+  if (idNumber) idNumber.value = store.draftIdNumber || "";
+  if (idType && idLabel) {
+    idLabel.textContent = wcSuspectIdNumberLabel(idType.value);
+    idType.addEventListener("change", () => {
+      idLabel.textContent = wcSuspectIdNumberLabel(idType.value);
+      store.draftIdType = idType.value;
+    });
+  }
+  if (other) {
+    other.value = store.otherInfo || "";
+    updateWcSuspectOtherCount();
+    other.addEventListener("input", updateWcSuspectOtherCount);
+  }
+  if (photoName) photoName.textContent = store.photoName || "No file chosen";
+  renderWcSuspectIdentityList();
 }
 
 function renderWcPreview() {
   const preview = document.querySelector("#wcPreviewContent");
-  preview.replaceChildren(
-    previewCard("Personal Details", state.wc.mode === "anonymous" ? {
+  const cards = [];
+  const signedIn = state.wc.mode === "login" && state.auth.isSignedIn;
+  if (state.wc.mode === "anonymous") {
+    cards.push(previewCard("Personal Details", {
       Mode: "Anonymous report",
-      "Identity shared": state.wc.personal.shareIdentity,
-      State: state.wc.personal.state,
-      District: state.wc.personal.district,
-      Name: state.wc.personal.shareIdentity === "Yes" ? state.wc.personal.name : "Not shared",
-      Mobile: state.wc.personal.shareIdentity === "Yes" ? state.wc.personal.mobile || "Not provided" : "Not shared",
-      Email: state.wc.personal.shareIdentity === "Yes" ? state.wc.personal.email || "Not provided" : "Not shared",
-    } : {
+      Status: "Identity not collected for this filing path",
+    }, "incidentDetails"));
+  } else {
+    cards.push(previewCard("Personal Details", {
       Mode: "Signed-in report",
       Name: state.wc.personal.name || state.reporter.name,
       Mobile: state.wc.personal.mobile || state.auth.mobile || state.reporter.mobile,
-      Email: state.wc.personal.email || state.reporter.email,
+      Email: state.wc.personal.email || state.reporter.email || "Not provided",
       State: state.wc.personal.state,
       District: state.wc.personal.district,
-    }, "personalDetails"),
+    }, "personalDetails"));
+  }
+  cards.push(
     previewCard("Incident Details", {
       Category: state.wc.complaint.category,
       "Incident date": state.wc.complaint.date,
@@ -1119,15 +1374,32 @@ function renderWcPreview() {
       "Police Station": state.wc.complaint.policeStation || "Not provided",
       "Occurred at": state.wc.complaint.occurredAt,
       Description: state.wc.complaint.description,
-    }, "incidentDetails"),
-    previewCard("Evidence summary", {
+    }, "incidentDetails")
+  );
+  if (signedIn) {
+    cards.push(previewCard("Evidence summary", {
       Platform: state.wc.evidence.platform,
       "Visible people/usernames": state.wc.evidence.people,
       "Nature of content": state.wc.evidence.nature,
       Timeline: state.wc.evidence.timeline,
-      "Attached files": state.documents.wcEvidence.length ? state.documents.wcEvidence.map((file) => file.name).join(", ") : "Synthetic or pasted evidence",
-    }, "incidentDetails")
+      "Attached files": state.documents.wcEvidence.length ? state.documents.wcEvidence.map((file) => file.name).join(", ") : "Sample or pasted evidence",
+    }, "incidentDetails"));
+  }
+  const hasSuspect = Boolean(
+    state.wc.suspect.suspectName
+    || state.wc.suspect.identities.length
+    || state.wc.suspect.photoName
+    || state.wc.suspect.otherInfo
   );
+  cards.push(previewCard("Suspect Details", hasSuspect ? {
+    Name: state.wc.suspect.suspectName || "Not provided",
+    Identifiers: state.wc.suspect.identities.length
+      ? state.wc.suspect.identities.map((item) => `${item.idType}: ${item.idNumber}`).join("; ")
+      : "Not provided",
+    Photograph: state.wc.suspect.photoName || "Not uploaded",
+    "Other information": state.wc.suspect.otherInfo || "Not provided",
+  } : { Status: "No suspect details added" }, "suspectDetails"));
+  preview.replaceChildren(...cards);
   preview.querySelectorAll(".preview-edit").forEach((button) => {
     button.dataset.action = "edit-wc-section";
   });
@@ -1262,9 +1534,11 @@ function renderPreview() {
     ])), "incidentDetails"),
     previewCard("Suspect Details", state.suspect.hasDetails ? {
       Name: state.suspect.suspectName || "Not provided",
-      "ID type": state.suspect.suspectIdType,
-      "ID number": state.suspect.suspectId || "Not provided",
-      Address: state.suspect.suspectAddress || "Not provided",
+      Identifiers: state.suspect.identities?.length
+        ? state.suspect.identities.map((item) => `${item.idType}: ${item.idNumber}`).join("; ")
+        : "Not provided",
+      Photograph: state.suspect.photoName || "Not uploaded",
+      "Other information": state.suspect.otherInfo || "Not provided",
     } : { Status: "Skipped by citizen" }, "suspectDetails")
   );
 }
@@ -1320,7 +1594,11 @@ function updateDescriptionCount() {
 function updateWcDescriptionCount() {
   const description = document.querySelector("#wcDescription");
   const count = document.querySelector("#wcDescriptionCount");
-  count.textContent = `${description.value.length} / 200 minimum`;
+  if (!description || !count) return;
+  const remaining = Math.max(0, 1500 - description.value.length);
+  count.textContent = description.value.length >= 200
+    ? `Maximum of 1500 characters — ${remaining} characters left.`
+    : `Insert at least 200 characters. Maximum 1500 — ${description.value.length} entered.`;
   count.style.color = description.value.length >= 200 ? "var(--teal-dark)" : "var(--red)";
 }
 
@@ -1336,23 +1614,11 @@ function showMessage(text) {
   if (existing) existing.remove();
   const toast = document.createElement("div");
   toast.className = "toast";
+  toast.setAttribute("role", "status");
   toast.textContent = text;
-  Object.assign(toast.style, {
-    position: "fixed",
-    right: "16px",
-    bottom: "16px",
-    zIndex: 50,
-    maxWidth: "320px",
-    padding: "13px 15px",
-    background: "#0b4f4a",
-    color: "white",
-    borderRadius: "8px",
-    boxShadow: "0 16px 36px rgba(0,0,0,0.18)",
-    fontWeight: "800",
-  });
   document.body.append(toast);
   globalStatus.textContent = text;
-  setTimeout(() => toast.remove(), 2600);
+  setTimeout(() => toast.remove(), 3200);
 }
 
 function getFilesTotalBytes(...inputs) {
@@ -1383,7 +1649,7 @@ async function postForm(url, formData, timeoutMs = 45000) {
     if (!response.ok || !payload?.ok) throw new Error(payload?.message || "The AI service could not process this request.");
     return payload;
   } catch (error) {
-    if (error.name === "AbortError") throw new Error("Processing took too long. You can use the synthetic sample instead.");
+    if (error.name === "AbortError") throw new Error("Processing took too long. You can use the sample instead.");
     throw error;
   } finally {
     clearTimeout(timeout);
@@ -1444,7 +1710,7 @@ async function processFinancialEvidence() {
     }
     assertUploadSize(files, audio);
     if (!files.files.length && !audio.files.length && !pastedText.trim()) {
-      throw new Error("Add a file, paste a message, record a voice note, or choose “Use synthetic sample”.");
+      throw new Error("Add a file, paste a message, record a voice note, or choose “Use sample”.");
     }
     retainEvidenceDocuments([...files.files, ...audio.files]);
     setProcessing("#financialProcessingState", "Securely organising your evidence…");
@@ -1464,22 +1730,32 @@ async function processFinancialEvidence() {
 async function processWcEvidence() {
   const files = document.querySelector("#wcEvidenceUpload");
   const audio = document.querySelector("#wcAudioUpload");
-  const pastedText = document.querySelector("#wcPastedText").value;
+  const pastedText = document.querySelector("#wcPastedText")?.value || "";
   try {
+    if (state.wc.evidenceReady && !files?.files.length && !audio?.files.length && !pastedText.trim()) {
+      state.wc.activeSection = wcDefaultSection();
+      render("wcWorkspace");
+      return;
+    }
     assertUploadSize(files, audio);
     if (!files.files.length && !audio.files.length && !pastedText.trim()) {
-      throw new Error("Add something you already have, or choose “Use synthetic sample”.");
+      throw new Error("Add something you already have, or choose “Use sample”.");
     }
     retainWcEvidenceDocuments([...files.files, ...audio.files]);
     setProcessing("#wcProcessingState", "Preparing a neutral draft. You stay in control…");
-    const transcription = await transcribeEvidence("women_children", audio);
-    const combinedText = [pastedText, transcription?.data?.transcript].filter(Boolean).join("\n\nVoice note transcript:\n");
-    const extraction = await extractEvidence("women_children", files, combinedText);
-    applyWcExtraction(extraction, transcription);
+    try {
+      const transcription = await transcribeEvidence("women_children", audio);
+      const combinedText = [pastedText, transcription?.data?.transcript].filter(Boolean).join("\n\nVoice note transcript:\n");
+      const extraction = await extractEvidence("women_children", files, combinedText);
+      applyWcExtraction(extraction, transcription);
+      showMessage(extraction.message);
+    } catch {
+      mockWcEvidence();
+      showMessage("Sample data was used to prepare a starting draft. Review every field.");
+    }
     state.wc.evidenceReady = true;
-    state.wc.activeSection = "personalDetails";
+    state.wc.activeSection = wcDefaultSection();
     render("wcWorkspace");
-    showMessage(extraction.message);
   } catch (error) {
     setProcessing("#wcProcessingState", error.message, true);
   }
@@ -1491,16 +1767,31 @@ async function processProfile() {
   await processProfileFrom(input, type, "#signupIdentityDocument", "newUser");
 }
 
+async function processSignupProfile() {
+  const input = document.querySelector("#signupIdentityUpload");
+  const type = document.querySelector("#signupIdentityType").value;
+  await processProfileFrom(input, type, "#signupAuthIdentityDocument", "signup");
+}
+
 async function processProfileFrom(input, type, displaySelector, returnScreen) {
   try {
     assertUploadSize(input);
-    if (!input.files.length) throw new Error("Choose a synthetic identity image or PDF, or use the sample.");
+    if (!input.files.length) throw new Error("Choose an identity image or PDF.");
     retainIdentityDocument("reporter", input.files[0], type);
-    const payload = await extractEvidence("profile", input, "");
-    state.reporter = { ...state.reporter, ...(payload.data.profile || {}) };
-    state.ai.profile.mode = payload.mode;
+    try {
+      const payload = await extractEvidence("profile", input, "");
+      state.reporter = { ...state.reporter, ...(payload.data.profile || {}) };
+      state.ai.profile.mode = payload.mode;
+    } catch {
+      state.reporter = {
+        ...sampleProfile,
+        mobile: state.auth.mobile || state.reporter.mobile || sampleProfile.mobile,
+      };
+      state.ai.profile.mode = "demo_fallback";
+    }
+    state.auth.profileReady = true;
     render(returnScreen);
-    showMessage("Profile fields prepared. The document is retained only for this browser session.");
+    showMessage("Profile fields prepared. Review and save when ready.");
   } catch (error) {
     renderDocumentDisplay(displaySelector, state.documents.reporter);
     showMessage(error.message);
@@ -1660,14 +1951,19 @@ async function downloadReportPdf() {
     write("Skipped by the citizen.", { muted: true });
   } else {
     field("Name", state.suspect.suspectName);
-    field("ID type", state.suspect.suspectIdType);
-    field("ID number", state.suspect.suspectId);
-    field("Address", state.suspect.suspectAddress);
+    field(
+      "Identifiers",
+      state.suspect.identities?.length
+        ? state.suspect.identities.map((item) => `${item.idType}: ${item.idNumber}`).join("; ")
+        : "Not provided"
+    );
+    field("Photograph", state.suspect.photoName || "Not uploaded");
+    field("Other information", state.suspect.otherInfo || "Not provided");
   }
 
   ensureSpace(24);
   y += 8;
-  write("This PDF was generated locally from synthetic prototype report data. No complaint was submitted to NCCRP.", { size: 9, style: "bold", muted: true });
+  write("This PDF was generated locally from prototype report data. No complaint was submitted to NCCRP.", { size: 9, style: "bold", muted: true });
   doc.save("Cyber-Crime-Reporting-Portal-sample-report-NCCRP-FIN-2026-10482.pdf");
   const status = document.querySelector("#pdfStatus");
   if (status) status.textContent = "PDF downloaded. It contains the report summary, not your uploaded files.";
@@ -1680,7 +1976,7 @@ function mockEvidence(index = 0) {
   if (!state.documents.evidence.length) {
     state.documents.evidence = [{
       type: "Evidence",
-      name: "Synthetic-UPI-payment-screenshot.png",
+      name: "UPI-payment-screenshot.png",
       size: 0,
       file: null,
       previewUrl: "",
@@ -1724,7 +2020,7 @@ function mockWcEvidence(index = 0) {
   if (!state.documents.wcEvidence.length) {
     state.documents.wcEvidence = [{
       type: "Evidence",
-      name: "Synthetic-safety-screenshot.png",
+      name: "safety-screenshot.png",
       size: 0,
       file: null,
       previewUrl: "",
@@ -1801,21 +2097,74 @@ async function handleAction(action, target) {
       description: "",
     };
     state.transactions = [{ ...mockTransactions[0] }];
-    state.suspect = { hasDetails: false, suspectName: "", suspectIdType: "UPI ID", suspectId: "", suspectAddress: "" };
+    state.suspect = { hasDetails: false, ...emptySuspectDetails() };
+    state.wc.suspect = emptyWcSuspect();
+    state.wc.evidenceReady = false;
+    state.wc.completedSections = [];
+    state.wc.activeSection = "incidentDetails";
     render("home");
     return;
   }
-  if (action === "open-auth") {
+  if (action === "open-login") {
+    if (state.auth.isSignedIn) {
+      showMessage(`Signed in as ${state.auth.mobile || state.reporter.mobile}.`);
+      return;
+    }
     state.returnAfterAuth = state.current;
-    render("auth");
+    state.auth.mode = "login";
+    state.auth.otpSent = false;
+    state.auth.otpVerified = false;
+    render("login");
+    return;
+  }
+  if (action === "open-signup") {
+    state.returnAfterAuth = state.current;
+    state.auth.mode = "signup";
+    state.auth.otpSent = false;
+    state.auth.otpVerified = false;
+    state.auth.profileReady = false;
+    render("signup");
     return;
   }
   if (action === "auth-back") {
+    if (state.returnAfterAuth === "prereq" && !state.auth.isSignedIn) {
+      render("userType");
+      return;
+    }
     render(state.returnAfterAuth || "home");
     return;
   }
-  if (action === "send-auth-otp") {
-    const mobile = document.querySelector("#authMobileInput").value.trim();
+  if (action === "send-login-otp") {
+    const mobile = document.querySelector("#loginMobileInput").value.trim();
+    if (!/^\d{10}$/.test(mobile)) {
+      showMessage("Enter a 10-digit mobile number.");
+      return;
+    }
+    state.auth.mobile = mobile;
+    state.auth.otpSent = true;
+    state.auth.otpVerified = false;
+    document.querySelector("#loginOtpArea").classList.remove("hidden");
+    showMessage("Mocked OTP generated: 123456");
+    return;
+  }
+  if (action === "verify-login-otp") {
+    if (!state.auth.otpSent) {
+      showMessage("Get an OTP first.");
+      return;
+    }
+    if (document.querySelector("#loginOtpInput").value.trim() !== "123456") {
+      showMessage("Use mocked OTP 123456.");
+      return;
+    }
+    state.auth.otpVerified = true;
+    state.auth.isSignedIn = true;
+    state.reporter.mobile = state.auth.mobile || state.reporter.mobile;
+    showMessage("You are signed in for this session.");
+    render(state.returnAfterAuth && state.returnAfterAuth !== "login" && state.returnAfterAuth !== "signup" ? state.returnAfterAuth : "home");
+    return;
+  }
+  if (action === "send-signup-otp") {
+    const mobile = document.querySelector("#signupMobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
       showMessage("Enter a 10-digit mobile number.");
       return;
@@ -1823,51 +2172,65 @@ async function handleAction(action, target) {
     state.auth.mobile = mobile;
     state.reporter.mobile = mobile;
     state.auth.otpSent = true;
-    document.querySelector("#authOtpArea").classList.remove("hidden");
+    state.auth.otpVerified = false;
+    document.querySelector("#signupOtpArea").classList.remove("hidden");
     showMessage("Mocked OTP generated: 123456");
     return;
   }
-  if (action === "process-auth-profile") {
-    const upload = document.querySelector("#authIdentityUpload");
-    const signupUpload = document.querySelector("#reporterIdentityUpload");
-    if (signupUpload && upload?.files?.[0]) {
-      const transfer = new DataTransfer();
-      transfer.items.add(upload.files[0]);
-      signupUpload.files = transfer.files;
-    }
-    await processProfileFrom(upload, document.querySelector("#authIdentityType").value, "#authIdentityDocument", "auth");
-    return;
-  }
-  if (action === "fill-auth-profile") {
-    const otpValue = document.querySelector("#authOtpInput")?.value || "";
-    state.reporter = { ...sampleProfile, mobile: state.auth.mobile || sampleProfile.mobile };
-    retainIdentityDocument("reporter", null, document.querySelector("#authIdentityType")?.value || "Aadhaar", true);
-    render("auth");
-    const otpInput = document.querySelector("#authOtpInput");
-    if (otpInput) otpInput.value = otpValue;
-    showMessage("Synthetic identity sample added.");
-    return;
-  }
-  if (action === "complete-auth") {
-    if (!state.auth.otpSent && !/^\d{10}$/.test(document.querySelector("#authMobileInput").value.trim())) {
-      showMessage("Verify a 10-digit mobile number first.");
+  if (action === "verify-signup-otp") {
+    if (!state.auth.otpSent) {
+      showMessage("Get an OTP first.");
       return;
     }
-    if (document.querySelector("#authOtpArea:not(.hidden)") && document.querySelector("#authOtpInput").value.trim() !== "123456") {
+    if (document.querySelector("#signupOtpInput").value.trim() !== "123456") {
       showMessage("Use mocked OTP 123456.");
       return;
     }
-    if (!validateRequired(".auth-profile-form")) return;
-    if (!state.documents.reporter) {
-      showMessage("Add a synthetic identity document or use the sample.");
+    state.auth.otpVerified = true;
+    render("signup");
+    showMessage("Mobile verified. Upload an identity document next.");
+    return;
+  }
+  if (action === "fill-signup-profile") {
+    if (!state.auth.otpVerified) {
+      showMessage("Verify your mobile OTP before adding identity details.");
       return;
     }
-    collectForm(".auth-profile-form", state.reporter);
+    state.reporter = {
+      ...sampleProfile,
+      mobile: state.auth.mobile || sampleProfile.mobile,
+    };
+    retainIdentityDocument("reporter", null, document.querySelector("#signupIdentityType")?.value || "Aadhaar", true);
+    state.auth.profileReady = true;
+    render("signup");
+    showMessage("Sample identity added. Review and save when ready.");
+    return;
+  }
+  if (action === "process-signup-profile") {
+    if (!state.auth.otpVerified) {
+      showMessage("Verify your mobile OTP before extracting identity details.");
+      return;
+    }
+    await processSignupProfile();
+    return;
+  }
+  if (action === "save-signup") {
+    if (!state.auth.otpVerified) {
+      showMessage("Verify a 10-digit mobile number first.");
+      return;
+    }
+    if (!state.auth.profileReady || !state.documents.reporter) {
+      showMessage("Extract identity details before saving.");
+      return;
+    }
+    if (!validateRequired(".signup-profile-form")) return;
+    collectForm(".signup-profile-form", state.reporter);
     state.auth.isSignedIn = true;
     state.auth.mobile = state.auth.mobile || state.reporter.mobile;
     if (state.returnAfterAuth === "wcWorkspace") state.wc.mode = "login";
-    showMessage("You are signed in for this session.");
-    render(state.returnAfterAuth && state.returnAfterAuth !== "auth" ? state.returnAfterAuth : "home");
+    if (state.returnAfterAuth === "prereq") state.financial.entry = "new";
+    showMessage("Profile saved. You are signed in for this session.");
+    render(state.returnAfterAuth && state.returnAfterAuth !== "login" && state.returnAfterAuth !== "signup" ? state.returnAfterAuth : "home");
     return;
   }
   if (action === "start-financial-report") {
@@ -1887,7 +2250,10 @@ async function handleAction(action, target) {
     if (state.auth.isSignedIn) render("trackingList");
     else {
       state.returnAfterAuth = "trackingList";
-      render("auth");
+      state.auth.mode = "login";
+      state.auth.otpSent = false;
+      state.auth.otpVerified = false;
+      render("login");
     }
     return;
   }
@@ -1945,7 +2311,10 @@ async function handleAction(action, target) {
   if (action === "start-wc-signed-in") {
     if (!state.auth.isSignedIn) {
       state.returnAfterAuth = "womenChildren";
-      render("auth");
+      state.auth.mode = "login";
+      state.auth.otpSent = false;
+      state.auth.otpVerified = false;
+      render("login");
       return;
     }
     state.wc.mode = "login";
@@ -1978,7 +2347,7 @@ async function handleAction(action, target) {
   if (action === "start-wc-manual") {
     resetWcManualComplaint();
     state.wc.evidenceReady = true;
-    state.wc.activeSection = "personalDetails";
+    state.wc.activeSection = wcDefaultSection();
     render("wcWorkspace");
     return;
   }
@@ -1989,8 +2358,13 @@ async function handleAction(action, target) {
   if (action === "mock-wc-evidence") {
     mockWcEvidence();
     state.wc.evidenceReady = true;
-    state.wc.activeSection = "personalDetails";
+    state.wc.activeSection = wcDefaultSection();
     render("wcWorkspace");
+    return;
+  }
+  if (action === "back-to-wc-evidence") {
+    saveWcSection(state.wc.activeSection, false);
+    render("wcStart");
     return;
   }
   if (action === "process-wc-evidence") {
@@ -2021,13 +2395,72 @@ async function handleAction(action, target) {
     changeWcSection(target.dataset.section, true);
     return;
   }
+  if (action === "add-wc-suspect-id") {
+    collectWcSuspectSection();
+    const store = activeSuspectStore();
+    const idType = store.draftIdType || "Driving Licence";
+    const idNumber = store.draftIdNumber;
+    if (!idNumber) {
+      showMessage("Enter an ID number before adding.");
+      document.querySelector("#wcSuspectIdNumber")?.focus();
+      return;
+    }
+    store.identities.push({ idType, idNumber });
+    store.draftIdNumber = "";
+    const input = document.querySelector("#wcSuspectIdNumber");
+    if (input) input.value = "";
+    renderWcSuspectIdentityList();
+    showMessage("Suspect identifier added.");
+    return;
+  }
+  if (action === "remove-wc-suspect-id") {
+    const store = activeSuspectStore();
+    const index = Number(target.dataset.index);
+    if (!Number.isNaN(index)) store.identities.splice(index, 1);
+    renderWcSuspectIdentityList();
+    return;
+  }
+  if (action === "upload-wc-suspect-photo") {
+    const store = activeSuspectStore();
+    const input = document.querySelector("#wcSuspectPhotoUpload");
+    const file = input?.files?.[0];
+    if (!file) {
+      showMessage("Choose a JPG or PNG photograph first.");
+      return;
+    }
+    if (!/\.(jpe?g|png)$/i.test(file.name) && !/^image\/(jpeg|png)$/i.test(file.type)) {
+      showMessage("Upload a JPG/JPEG/PNG photograph only.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage("Suspect photograph must be 5 MB or smaller.");
+      return;
+    }
+    store.photoName = file.name;
+    const label = document.querySelector("#wcSuspectPhotoName");
+    if (label) label.textContent = file.name;
+    showMessage("Suspect photograph attached for this session.");
+    return;
+  }
   if (action === "preview-wc-report") {
-    if (!saveWcSection("incidentDetails", true)) return;
+    if (!saveWcSection("suspectDetails", true)) return;
+    if (!state.wc.completedSections.includes("incidentDetails")) {
+      state.wc.activeSection = "incidentDetails";
+      render("wcWorkspace");
+      showMessage("Complete Incident Details before previewing the report.");
+      return;
+    }
+    if (state.wc.mode === "login" && state.auth.isSignedIn && !state.wc.completedSections.includes("personalDetails")) {
+      state.wc.activeSection = "personalDetails";
+      render("wcWorkspace");
+      showMessage("Complete Personal Details before previewing the report.");
+      return;
+    }
     render("wcPreview");
     return;
   }
   if (action === "edit-wc-section") {
-    state.wc.activeSection = target.dataset.section || "personalDetails";
+    state.wc.activeSection = target.dataset.section || wcDefaultSection();
     render("wcWorkspace");
     return;
   }
@@ -2042,8 +2475,7 @@ async function handleAction(action, target) {
     return;
   }
   if (action === "save-wc-suspect") {
-    state.wc.suspect.hasDetails = document.querySelector("#wcShareSuspect").checked;
-    collectForm(".wc-suspect-form", state.wc.suspect);
+    collectWcSuspectSection();
     render("wcPreview");
     return;
   }
@@ -2065,11 +2497,16 @@ async function handleAction(action, target) {
   if (action === "start-new-financial") {
     state.financial.entry = "new";
     state.financial.reportFor = "self";
+    state.auth.profileReady = false;
+    state.auth.otpSent = false;
+    state.auth.otpVerified = false;
+    state.auth.mode = "signup";
     releaseDocument(state.documents.reporter);
     releaseDocument(state.documents.victim);
     state.documents.reporter = null;
     state.documents.victim = null;
-    render("newUser");
+    state.returnAfterAuth = "prereq";
+    render("signup");
     return;
   }
   if (action === "send-otp") {
@@ -2095,11 +2532,12 @@ async function handleAction(action, target) {
     render("prereq");
     return;
   }
-  if (action === "mock-aadhaar" || action === "fill-profile") {
+  if (action === "mock-aadhaar") {
     state.reporter = { ...sampleProfile };
     retainIdentityDocument("reporter", null, document.querySelector("#reporterIdentityType")?.value || "Aadhaar", true);
+    state.auth.profileReady = true;
     render("newUser");
-    showMessage(action === "mock-aadhaar" ? "Aadhaar fields extracted from a synthetic sample." : "Sample profile filled.");
+    showMessage("Aadhaar fields extracted from a sample.");
     return;
   }
   if (action === "process-profile") {
@@ -2107,27 +2545,49 @@ async function handleAction(action, target) {
     return;
   }
   if (action === "save-profile") {
+    if (!state.auth.profileReady && !state.documents.reporter) {
+      showMessage("Extract identity details before saving.");
+      document.querySelector("#reporterIdentityUpload")?.focus();
+      return;
+    }
     if (!validateRequired(".profile-form")) return;
     if (!state.documents.reporter) {
-      showMessage("Attach a synthetic identity document or use the synthetic sample.");
+      showMessage("Attach an identity document before saving.");
       document.querySelector("#reporterIdentityUpload")?.focus();
       return;
     }
     collectForm(".profile-form", state.reporter);
     state.financial.entry = "new";
+    state.auth.isSignedIn = true;
+    state.auth.mobile = state.reporter.mobile;
     render("prereq");
     return;
   }
   if (action === "financial-prereq-back") {
-    render(state.financial.entry === "new" ? "newUser" : "existingLogin");
+    if (state.auth.isSignedIn) {
+      render("home");
+      return;
+    }
+    render(state.financial.entry === "new" ? "userType" : "existingLogin");
     return;
   }
   if (action === "mock-evidence-and-continue") {
     if (!state.documents.reporter) {
-      showMessage("Complete the reporter identity step before using the synthetic evidence sample.");
+      showMessage("Complete the reporter identity step before using the sample.");
       return;
     }
     mockEvidence();
+    state.financial.evidenceReady = true;
+    state.financial.activeSection = "myDetails";
+    render("financialWorkspace");
+    return;
+  }
+  if (action === "manual-financial-continue") {
+    if (!state.documents.reporter) {
+      showMessage("Complete the reporter identity step before continuing.");
+      return;
+    }
+    if (!state.complaint.description?.trim()) state.complaint.description = draftDescription();
     state.financial.evidenceReady = true;
     state.financial.activeSection = "myDetails";
     render("financialWorkspace");
@@ -2214,18 +2674,6 @@ document.addEventListener("change", async (event) => {
     state.financial.reportFor = target.value;
     state.financial.completedSections = state.financial.completedSections.filter((section) => section !== "myDetails");
     render("financialWorkspace");
-    return;
-  }
-  if (target.matches('input[name="wcModeChoice"]')) {
-    if (target.value === "login" && !state.auth.isSignedIn) {
-      state.returnAfterAuth = "wcWorkspace";
-      render("auth");
-      return;
-    }
-    saveWcSection("personalDetails", false);
-    state.wc.mode = target.value;
-    state.wc.completedSections = state.wc.completedSections.filter((section) => section !== "personalDetails");
-    render("wcWorkspace");
     return;
   }
   if (target.id === "victimIdentityUpload" && target.files?.[0]) {

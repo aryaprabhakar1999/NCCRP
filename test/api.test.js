@@ -102,7 +102,7 @@ test("audio endpoint falls back safely and speech endpoint reports missing confi
   const response = mockResponse();
   await transcribeHandler(request, response);
   assert.equal(response.payload.mode, "demo_fallback");
-  assert.match(response.payload.data.transcript, /Synthetic voice note/);
+  assert.match(response.payload.data.transcript, /Voice note/);
 
   const speechRequest = Readable.from([]);
   speechRequest.method = "POST";
