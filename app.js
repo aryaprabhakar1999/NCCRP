@@ -28,6 +28,8 @@ const screens = {
   login: "login-template",
   signup: "signup-template",
   home: "home-template",
+  scamDirectory: "scam-directory-template",
+  siteInfo: "site-info-template",
   trackingHome: "tracking-home-template",
   trackingLookup: "tracking-lookup-template",
   trackingLogin: "tracking-login-template",
@@ -313,9 +315,88 @@ const trackingRequests = [
   },
 ];
 
+/** Synthetic demo indicators only — not a real offender list. */
+const sampleScamIndicators = [
+  { type: "site", value: "pay-secure-demo.example", reason: "Sample lookalike KYC / payment page used in demo evidence." },
+  { type: "site", value: "verify-wallet-now.test", reason: "Sample wallet-verification lure domain for this prototype." },
+  { type: "email", value: "refund-desk@demo-bank.test", reason: "Sample spoofed bank-support address." },
+  { type: "phone", value: "9876500001", reason: "Sample number used in fake OTP / KYC call scenarios." },
+  { type: "person", value: "urgent-kyc@upi.demo", reason: "Sample UPI handle tied to a collect-request pattern." },
+  { type: "person", value: "@hiring_agent_demo", reason: "Sample username used in job-offer advance-fee stories." },
+];
+
+function normalizeScamQuery(value) {
+  return String(value || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+}
+
+function checkScamIndicator(type, rawValue) {
+  const query = normalizeScamQuery(rawValue);
+  if (!query) {
+    return { matched: false, empty: true, message: "Enter a site, email, phone, or username to check." };
+  }
+  const pool = sampleScamIndicators.filter((item) => item.type === type);
+  const match = pool.find((item) => {
+    const needle = normalizeScamQuery(item.value);
+    return query === needle || query.includes(needle) || needle.includes(query);
+  });
+  if (match) {
+    return {
+      matched: true,
+      empty: false,
+      message: "Possible match — review carefully",
+      detail: match.reason,
+      sample: match.value,
+    };
+  }
+  return {
+    matched: false,
+    empty: false,
+    message: "No match in sample list",
+    detail: "This demo list is tiny and synthetic. A miss does not mean the contact is safe.",
+  };
+}
+
+const siteInfoPages = {
+  feedback: {
+    title: "Feedback",
+    body: "This is an independent hackathon prototype. Feedback stays in this demo session only and is not sent to any government office. For real cybercrime help, call 1930 (financial fraud) or 112 (emergency).",
+  },
+  faq: {
+    title: "FAQ",
+    body: "This prototype helps you prepare a report draft from evidence you already have. AI organises fields; you review and confirm. Nothing is filed to the official NCRP portal from this demo.",
+  },
+  contact: {
+    title: "Contact Us",
+    body: "Prototype contact only — not a ministry helpdesk. For financial cyber fraud call 1930. For immediate danger call 112. Official reporting: cybercrime.gov.in.",
+  },
+  policies: {
+    title: "Website Policies",
+    body: "Use this site only as a Build What Moves India prototype. Do not upload real identity documents or sensitive personal data. Sample and synthetic data are used throughout.",
+  },
+  privacy: {
+    title: "Privacy Policy",
+    body: "Uploads in this prototype are processed in-session for demonstration and are not stored as an official complaint record. Prefer synthetic samples for demos.",
+  },
+  disclaimer: {
+    title: "Disclaimer",
+    body: "Not an official NCRP or government service. Acknowledgement numbers and statuses here are mocked. For real emergencies and filings use official helplines and cybercrime.gov.in.",
+  },
+};
+
+function renderSiteInfo(topic) {
+  const page = siteInfoPages[topic] || siteInfoPages.disclaimer;
+  const title = document.querySelector("#siteInfoTitle");
+  const body = document.querySelector("#siteInfoBody");
+  const eyebrow = document.querySelector("#siteInfoEyebrow");
+  if (title) title.textContent = page.title;
+  if (body) body.textContent = page.body;
+  if (eyebrow) eyebrow.textContent = "About this prototype";
+}
+
 const state = {
   current: "home",
   returnAfterAuth: "home",
+  siteInfoTopic: "disclaimer",
   auth: {
     isSignedIn: false,
     mobile: "",
@@ -422,6 +503,7 @@ function render(screen) {
   if (screen === "financialWorkspace") renderFinancialWorkspace();
   if (screen === "preview") renderPreview();
   if (screen === "done") document.querySelector("#finalTime").textContent = formatElapsed();
+  if (screen === "siteInfo") renderSiteInfo(state.siteInfoTopic || "disclaimer");
   updateAuthButton();
 
   updateProgress(screen);
@@ -2238,6 +2320,36 @@ function resetWcManualComplaint() {
 }
 
 async function handleAction(action, target) {
+  if (action === "open-site-info") {
+    state.siteInfoTopic = target?.dataset?.topic || "disclaimer";
+    render("siteInfo");
+    return;
+  }
+  if (action === "back-to-top") {
+    const homeScroll = document.querySelector(".home-scroll");
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    if (homeScroll) homeScroll.scrollTo({ top: 0, behavior });
+    else window.scrollTo({ top: 0, behavior });
+    return;
+  }
+  if (action === "check-scam-indicator") {
+    const type = document.querySelector("#scamCheckType")?.value || "site";
+    const value = document.querySelector("#scamCheckInput")?.value || "";
+    const result = checkScamIndicator(type, value);
+    const panel = document.querySelector("#scamCheckResult");
+    if (!panel) return;
+    if (result.empty) {
+      showMessage(result.message, "error");
+      panel.classList.add("hidden");
+      panel.textContent = "";
+      return;
+    }
+    panel.classList.remove("hidden");
+    panel.classList.toggle("scam-check-match", result.matched);
+    panel.classList.toggle("scam-check-clear", !result.matched);
+    panel.innerHTML = `<strong>${result.message}</strong><span>${result.detail}${result.sample ? ` Matched sample: ${result.sample}.` : ""}</span><small>Demo result only — not an official finding.</small>`;
+    return;
+  }
   if (action === "go-home") {
     if (!state.auth.isSignedIn) releaseDocument(state.documents.reporter);
     releaseDocument(state.documents.victim);

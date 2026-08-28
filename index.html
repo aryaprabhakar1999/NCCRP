@@ -31,9 +31,37 @@
       <nav id="journeyProgress" class="journey-progress hidden" aria-label="Report progress"></nav>
       <main id="app" class="app-main" tabindex="-1"></main>
       <div id="globalStatus" class="sr-only" role="status" aria-live="polite"></div>
-      <footer class="app-footer" role="contentinfo">
-        <p>Independent prototype for Build What Moves India. Not an official NCRP or government service.</p>
+      <footer class="app-footer site-footer" role="contentinfo">
+        <div class="site-footer-top">
+          <nav class="site-footer-links" aria-label="Prototype site links">
+            <button type="button" data-action="open-site-info" data-topic="feedback">Feedback</button>
+            <button type="button" data-action="open-site-info" data-topic="faq">FAQ</button>
+            <button type="button" data-action="open-site-info" data-topic="contact">Contact Us</button>
+            <button type="button" data-action="open-site-info" data-topic="policies">Website Policies</button>
+            <button type="button" data-action="open-site-info" data-topic="privacy">Privacy Policy</button>
+            <button type="button" data-action="open-site-info" data-topic="disclaimer">Disclaimer</button>
+          </nav>
+          <div class="site-footer-social" aria-label="Demo social links">
+            <span class="social-dot social-x" title="Demo link">X</span>
+            <span class="social-dot social-fb" title="Demo link">f</span>
+            <span class="social-dot social-yt" title="Demo link">▶</span>
+            <span class="social-dot social-ig" title="Demo link">ig</span>
+            <span class="social-dot social-tg" title="Demo link">✈</span>
+            <span class="social-dot social-in" title="Demo link">in</span>
+          </div>
+        </div>
+        <div class="site-footer-bottom">
+          <div class="site-footer-copy">
+            <p>Prototype content prepared by an independent Build What Moves India team. Not an official government website.</p>
+            <p>Best viewed in Mozilla Firefox, Google Chrome.</p>
+          </div>
+          <div class="site-footer-meta">
+            <p>Visitor Count: <strong>12,480</strong> <span class="meta-note">(demo)</span></p>
+            <p>Last Updated: 28/08/2026</p>
+          </div>
+        </div>
       </footer>
+      <button class="back-to-top" type="button" data-action="back-to-top" aria-label="Back to top">↑</button>
     </div>
 
     <template id="login-template">
@@ -113,45 +141,186 @@
     </template>
 
     <template id="home-template">
-      <section class="hero">
-        <img src="assets/nccrp-hero.png" alt="Digital help desk scene for reporting online financial crime" />
-        <div class="hero-overlay">
-          <p class="eyebrow">A simpler way to report cybercrime</p>
-          <h1>You are not alone.<br />We’ll help you report what happened.</h1>
-          <p class="hero-copy">Reporting for yourself or helping someone else? We'll guide you both.</p>
-          <div class="choice-grid">
-            <button class="choice-card primary-choice" type="button" data-action="start-financial-report">
-              <span class="choice-icon" aria-hidden="true">₹</span>
-              <span>
-                <strong>Money taken from your account?</strong>
-                <small>Upload your payment screenshot or bank SMS and prepare your financial fraud report.</small>
-                <em class="choice-cta">Prepare a financial fraud report →</em>
-              </span>
-            </button>
-            <button class="choice-card" type="button" data-action="start-wc-report">
-              <span class="choice-icon" aria-hidden="true">!</span>
-              <span>
-                <strong>Something unsafe happened online?</strong>
-                <small>Share the evidence you have and prepare a report you can review.</small>
-                <em class="choice-cta">Report online abuse →</em>
-              </span>
-            </button>
-            <button class="choice-card" type="button" data-next="trackingHome">
-              <span class="choice-icon" aria-hidden="true">?</span>
-              <span>
-                <strong>Already reported a cybercrime?</strong>
-                <small>Check status and track your complaint.</small>
-                <em class="choice-cta">Track complaint →</em>
-              </span>
-            </button>
+      <div class="home-screen">
+        <div class="home-scroll">
+          <section class="hero">
+            <img src="assets/nccrp-hero.png" alt="Digital help desk scene for reporting online financial crime" />
+            <div class="hero-overlay">
+              <p class="eyebrow">A simpler way to report cybercrime</p>
+              <h1>You are not alone.<br />We’ll help you report what happened.</h1>
+              <p class="hero-copy">Reporting for yourself or helping someone else? We'll guide you both.</p>
+              <div class="choice-grid">
+                <button class="choice-card primary-choice" type="button" data-action="start-financial-report">
+                  <span class="choice-icon" aria-hidden="true">₹</span>
+                  <span>
+                    <strong>Money taken from your account?</strong>
+                    <small>Upload your payment screenshot or bank SMS and prepare your financial fraud report.</small>
+                    <em class="choice-cta">Prepare a financial fraud report →</em>
+                  </span>
+                </button>
+                <button class="choice-card" type="button" data-action="start-wc-report">
+                  <span class="choice-icon" aria-hidden="true">!</span>
+                  <span>
+                    <strong>Something unsafe happened online?</strong>
+                    <small>Share the evidence you have and prepare a report you can review.</small>
+                    <em class="choice-cta">Report online abuse →</em>
+                  </span>
+                </button>
+                <button class="choice-card" type="button" data-next="trackingHome">
+                  <span class="choice-icon" aria-hidden="true">?</span>
+                  <span>
+                    <strong>Already reported a cybercrime?</strong>
+                    <small>Check status and track your complaint.</small>
+                    <em class="choice-cta">Track complaint →</em>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="home-section" id="how-it-works" aria-labelledby="how-it-works-heading">
+            <p class="eyebrow">How it works</p>
+            <h2 id="how-it-works-heading">Three steps from evidence to a reviewable draft</h2>
+            <div class="step-row">
+              <article class="step-card">
+                <span class="step-num" aria-hidden="true">1</span>
+                <strong>Share what you have</strong>
+                <p>Upload a payment screenshot, bank SMS, chat, or voice note—or enter details manually.</p>
+              </article>
+              <article class="step-card">
+                <span class="step-num" aria-hidden="true">2</span>
+                <strong>We organise a draft</strong>
+                <p>Scattered details are turned into structured report fields you can read in plain language.</p>
+              </article>
+              <article class="step-card">
+                <span class="step-num" aria-hidden="true">3</span>
+                <strong>You review and confirm</strong>
+                <p>Correct anything that looks wrong. Nothing is submitted until you explicitly confirm.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="home-section" id="demo-stats" aria-labelledby="demo-stats-heading">
+            <p class="eyebrow">Demo figures for this prototype — not official NCRP data</p>
+            <h2 id="demo-stats-heading">Sample activity in this build</h2>
+            <div class="stat-grid">
+              <div class="stat-card">
+                <strong>128</strong>
+                <span>Reports prepared</span>
+              </div>
+              <div class="stat-card">
+                <strong>84</strong>
+                <span>Financial fraud drafts</span>
+              </div>
+              <div class="stat-card">
+                <strong>44</strong>
+                <span>Online abuse drafts</span>
+              </div>
+              <div class="stat-card">
+                <strong>~6 min</strong>
+                <span>Avg. time to prepare</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="home-section" id="stay-alert" aria-labelledby="stay-alert-heading">
+            <p class="eyebrow">Stay alert</p>
+            <h2 id="stay-alert-heading">Common patterns we see in sample evidence</h2>
+            <div class="pattern-grid">
+              <article class="pattern-card">
+                <strong>UPI “collect” request</strong>
+                <p>Someone asks you to approve a payment request that actually sends money out of your account.</p>
+              </article>
+              <article class="pattern-card">
+                <strong>Fake KYC / bank link</strong>
+                <p>A rushed SMS or WhatsApp message pushes you to “verify” on a lookalike website.</p>
+              </article>
+              <article class="pattern-card">
+                <strong>Job-offer advance fee</strong>
+                <p>A hiring “agent” asks for registration or training fees before any real offer exists.</p>
+              </article>
+            </div>
+            <button class="primary home-section-cta" type="button" data-next="scamDirectory">Open scam directory →</button>
+          </section>
+        </div>
+
+        <aside class="help-strip" id="emergency-help" aria-label="Emergency help numbers">
+          <strong class="help-strip-title">Need help right now?</strong>
+          <span><strong>Financial fraud:</strong> Call <a href="tel:1930">1930</a> immediately to report cyber financial fraud.</span>
+          <span><strong>Immediate danger:</strong> Call <a href="tel:112">112</a> for emergency police assistance. Women can also call <a href="tel:181">181</a> for support; <a href="tel:1098">1098</a> is the Child Helpline.</span>
+        </aside>
+      </div>
+    </template>
+
+    <template id="site-info-template">
+      <section class="panel narrow">
+        <button class="ghost back" type="button" data-action="go-home">Back</button>
+        <p class="eyebrow" id="siteInfoEyebrow">About this prototype</p>
+        <h2 id="siteInfoTitle">Information</h2>
+        <p class="support-note" id="siteInfoBody"></p>
+      </section>
+    </template>
+
+    <template id="scam-directory-template">
+      <section class="panel scam-directory-panel">
+        <button class="ghost back" type="button" data-action="go-home">Back</button>
+        <p class="eyebrow">Awareness tool</p>
+        <h2>Scam indicator directory (demo)</h2>
+        <p class="support-note">Synthetic sample data only. This is not a police database, does not prove guilt, and must not be used to accuse anyone. For awareness inside this prototype.</p>
+        <div class="scam-check-form">
+          <label>What are you checking?
+            <select id="scamCheckType">
+              <option value="site">Site URL</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="person">Person / username</option>
+            </select>
+          </label>
+          <label>Value
+            <input id="scamCheckInput" type="text" placeholder="e.g. pay-secure-demo.example or @sample_agent" autocomplete="off" />
+          </label>
+          <button class="primary" type="button" data-action="check-scam-indicator">Check</button>
+        </div>
+        <div id="scamCheckResult" class="scam-check-result hidden" role="status" aria-live="polite"></div>
+        <h3 class="form-section-title">Sample indicators in this demo</h3>
+        <div class="scam-sample-table" role="table" aria-label="Sample scam indicators">
+          <div class="scam-sample-row scam-sample-head" role="row">
+            <span role="columnheader">Type</span>
+            <span role="columnheader">Sample value</span>
+            <span role="columnheader">Note</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">Site</span>
+            <span role="cell">pay-secure-demo.example</span>
+            <span role="cell">SAMPLE — fake KYC page</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">Email</span>
+            <span role="cell">refund-desk@demo-bank.test</span>
+            <span role="cell">SAMPLE — spoofed support</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">Phone</span>
+            <span role="cell">9876500001</span>
+            <span role="cell">SAMPLE — fake OTP caller</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">UPI / person</span>
+            <span role="cell">urgent-kyc@upi.demo</span>
+            <span role="cell">SAMPLE — collect request</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">Username</span>
+            <span role="cell">@hiring_agent_demo</span>
+            <span role="cell">SAMPLE — job advance fee</span>
+          </div>
+          <div class="scam-sample-row" role="row">
+            <span role="cell">Site</span>
+            <span role="cell">verify-wallet-now.test</span>
+            <span role="cell">SAMPLE — wallet takeover lure</span>
           </div>
         </div>
       </section>
-      <aside class="help-strip" id="emergency-help" aria-label="Emergency help numbers">
-        <strong class="help-strip-title">Need help right now?</strong>
-        <span><strong>Financial fraud:</strong> Call <a href="tel:1930">1930</a> immediately to report cyber financial fraud.</span>
-        <span><strong>Immediate danger:</strong> Call <a href="tel:112">112</a> for emergency police assistance. Women can also call <a href="tel:181">181</a> for support; <a href="tel:1098">1098</a> is the Child Helpline.</span>
-      </aside>
     </template>
 
     <template id="tracking-home-template">
