@@ -23,7 +23,7 @@ async function prepareDraft(client, flowType, transcript) {
     ? "Use neutral, non-graphic and supportive language. Do not repeat explicit content."
     : "Clearly state the transaction facts and request urgent review.";
   const response = await client.responses.create({
-    model: process.env.OPENAI_EXTRACT_MODEL || "gpt-5.6",
+    model: process.env.OPENAI_EXTRACT_MODEL || "gpt-4o-mini",
     input: [
       {
         role: "system",
@@ -62,7 +62,7 @@ export default async function handler(request, response) {
       const file = await toFile(audio.buffer, audio.filename, { type: audio.mimeType });
       const transcription = await client.audio.transcriptions.create({
         file,
-        model: process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe",
+        model: process.env.OPENAI_TRANSCRIBE_MODEL || "whisper-1",
       });
       const transcript = transcription.text?.trim();
       if (!transcript) throw new Error("No speech was detected.");

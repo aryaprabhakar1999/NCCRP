@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import { strToU8, zipSync } from "fflate";
 import extractHandler from "../api/extract-evidence.js";
-import speechHandler from "../api/text-to-speech.js";
 import transcribeHandler from "../api/transcribe-audio.js";
 import { buildModelContent } from "../api/_lib/content.js";
 import { fallbackFinancial, fallbackProfile, fallbackWomenChildren } from "../api/_lib/fallbacks.js";
@@ -92,7 +91,7 @@ test("evidence endpoint returns an honest synthetic fallback without an API key"
   assert.equal(response.payload.data.transaction.utr, "409812345678");
 });
 
-test("audio endpoint falls back safely and speech endpoint reports missing configuration", async () => {
+test("audio endpoint falls back safely without an API key", async () => {
   const originalKey = process.env.OPENAI_API_KEY;
   delete process.env.OPENAI_API_KEY;
   const request = multipartRequest(
@@ -101,18 +100,9 @@ test("audio endpoint falls back safely and speech endpoint reports missing confi
   );
   const response = mockResponse();
   await transcribeHandler(request, response);
+  if (originalKey) process.env.OPENAI_API_KEY = originalKey;
   assert.equal(response.payload.mode, "demo_fallback");
   assert.match(response.payload.data.transcript, /Voice note/);
-
-  const speechRequest = Readable.from([]);
-  speechRequest.method = "POST";
-  speechRequest.headers = { "content-type": "application/json" };
-  speechRequest.body = { text: "You are in control." };
-  const speechResponse = mockResponse();
-  await speechHandler(speechRequest, speechResponse);
-  if (originalKey) process.env.OPENAI_API_KEY = originalKey;
-  assert.equal(speechResponse.statusCode, 503);
-  assert.equal(speechResponse.payload.mode, "demo_fallback");
 });
 
 test("evidence endpoint rejects unsupported files before model processing", async () => {

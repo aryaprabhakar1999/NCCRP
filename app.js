@@ -497,7 +497,7 @@ function validateRequired(selector) {
   fields.forEach((field) => field.setAttribute("aria-invalid", String(!field.value.trim())));
   const invalid = fields.find((field) => !field.value.trim());
   if (!invalid) return true;
-  showMessage("Please complete the highlighted required field.");
+  showMessage("Please complete the highlighted required field.", "error");
   invalid.focus();
   return false;
 }
@@ -684,6 +684,7 @@ function setupPrerequisites() {
     demo.disabled = !reporterDocument;
     if (manual) manual.disabled = !reporterDocument;
     if (state.financial.evidenceReady && !hasInput) prepare.textContent = "Continue to report";
+    else prepare.textContent = "Upload and create report";
   };
 
   files.addEventListener("change", update);
@@ -710,7 +711,7 @@ function setupWcPrerequisites() {
     const hasInput = files.files.length > 0 || (audio?.files?.length || 0) > 0 || (text?.value.trim().length || 0) > 0;
     prepare.disabled = !hasInput && !state.wc.evidenceReady;
     if (state.wc.evidenceReady && !hasInput) prepare.textContent = "Continue to report";
-    else prepare.textContent = "Prepare report from evidence";
+    else prepare.textContent = "Upload and create report";
   };
 
   files.addEventListener("change", update);
@@ -786,6 +787,7 @@ function sectionMarkup(section) {
       ${reporterSection}
       ${otherPersonFields}
       <div class="section-actions">
+        <button class="secondary" type="button" data-action="back-to-evidence">Back</button>
         <button class="primary" type="button" data-action="continue-report-section" data-section="incidentDetails">Save and continue</button>
       </div>
     `;
@@ -951,6 +953,7 @@ function wcSectionMarkup(section) {
       <p class="section-intro">Your signed-in details are prefilled. You can still choose how much contact information appears in this report.</p>
       <div class="form-grid wc-personal-form"></div>
       <div class="section-actions">
+        <button class="secondary" type="button" data-action="back-to-wc-evidence">Back</button>
         <button class="primary" type="button" data-action="continue-wc-section" data-section="incidentDetails">Save and continue</button>
       </div>
     `;
@@ -981,7 +984,9 @@ function wcSectionMarkup(section) {
       <small id="wcDescriptionCount">Insert at least 200 characters. Maximum 1500.</small>
     </label>
     <div class="section-actions">
-      ${backSection ? `<button class="secondary" type="button" data-action="change-wc-section" data-section="${backSection}">Back</button>` : ""}
+      ${backSection
+    ? `<button class="secondary" type="button" data-action="change-wc-section" data-section="${backSection}">Back</button>`
+    : `<button class="secondary" type="button" data-action="back-to-wc-evidence">Back</button>`}
       <button class="primary" type="button" data-action="continue-wc-section" data-section="suspectDetails">Save and continue</button>
     </div>
   `;
@@ -1068,7 +1073,7 @@ function saveWcSection(section, validate = true) {
   if (section === "personalDetails") {
     collectForm(".wc-personal-form", state.wc.personal);
     if (validate && state.wc.personal.shareIdentity === "Yes" && !state.wc.personal.name.trim()) {
-      showMessage("Add a name or choose not to share identity.");
+      showMessage("Add a name or choose not to share identity.", "error");
       document.querySelector('[data-field="name"]')?.focus();
       return false;
     }
@@ -1079,7 +1084,7 @@ function saveWcSection(section, validate = true) {
     collectForm(".wc-complaint-form", state.wc.complaint);
     state.wc.complaint.description = document.querySelector("#wcDescription").value.trim();
     if (validate && state.wc.complaint.description.length < 200) {
-      showMessage("Additional information must be at least 200 characters.");
+      showMessage("Additional information must be at least 200 characters.", "error");
       document.querySelector("#wcDescription")?.focus();
       return false;
     }
@@ -1112,7 +1117,7 @@ function saveFinancialSection(section, validate = true) {
     if (validate && !validateRequired(".workspace-profile-form")) return false;
     collectForm(".workspace-profile-form", state.reporter);
     if (validate && !state.documents.reporter) {
-      showMessage("Attach the reporter’s identity document before continuing.");
+      showMessage("Attach the reporter’s identity document before continuing.", "error");
       document.querySelector("#reporterIdentityDocument")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return false;
     }
@@ -1127,17 +1132,17 @@ function saveFinancialSection(section, validate = true) {
       state.financial.consentConfirmed = Boolean(consent?.checked);
       relationship?.setAttribute("aria-invalid", String(!state.financial.relationshipToVictim));
       if (validate && !state.financial.relationshipToVictim) {
-        showMessage("Choose your relationship to the affected person.");
+        showMessage("Choose your relationship to the affected person.", "error");
         relationship?.focus();
         return false;
       }
       if (validate && !state.documents.victim) {
-        showMessage("Attach an identity document for the affected person.");
+        showMessage("Attach an identity document for the affected person.", "error");
         document.querySelector("#victimIdentityUpload")?.focus();
         return false;
       }
       if (validate && !state.financial.consentConfirmed) {
-        showMessage("Confirm consent or authority to prepare this report.");
+        showMessage("Confirm consent or authority to prepare this report.", "error");
         consent?.focus();
         return false;
       }
@@ -1147,7 +1152,7 @@ function saveFinancialSection(section, validate = true) {
     syncComplaint();
     syncTransactions();
     if (validate && state.complaint.description.length < 200) {
-      showMessage("Incident description must be at least 200 characters.");
+      showMessage("Incident description must be at least 200 characters.", "error");
       document.querySelector("#incidentDescription")?.focus();
       return false;
     }
@@ -1609,11 +1614,11 @@ function formatElapsed() {
   return `${mins}:${secs}`;
 }
 
-function showMessage(text) {
+function showMessage(text, tone = "info") {
   const existing = document.querySelector(".toast");
   if (existing) existing.remove();
   const toast = document.createElement("div");
-  toast.className = "toast";
+  toast.className = `toast toast-${tone === "error" ? "error" : "info"}`;
   toast.setAttribute("role", "status");
   toast.textContent = text;
   document.body.append(toast);
@@ -1794,7 +1799,7 @@ async function processProfileFrom(input, type, displaySelector, returnScreen) {
     showMessage("Profile fields prepared. Review and save when ready.");
   } catch (error) {
     renderDocumentDisplay(displaySelector, state.documents.reporter);
-    showMessage(error.message);
+    showMessage(error.message, "error");
   }
 }
 
@@ -1811,36 +1816,11 @@ async function processVictimIdentity(input, type) {
     render("financialWorkspace");
     showMessage("Affected person’s details were prepared from the retained document. Please review them.");
   } catch (error) {
-    showMessage(`${error.message} The document is retained; enter or review the details manually.`);
+    showMessage(`${error.message} The document is retained; enter or review the details manually.`, "error");
   }
 }
 
-async function speakText(text) {
-  try {
-    showMessage("Preparing audio guidance…");
-    const response = await fetch("/api/text-to-speech", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, voiceStyle: "calm and reassuring" }),
-    });
-    const payload = await response.json();
-    if (!response.ok || !payload.ok || !payload.data?.audioBase64) throw new Error(payload.message || "Audio is unavailable.");
-    const audio = new Audio(`data:${payload.data.contentType || "audio/mpeg"};base64,${payload.data.audioBase64}`);
-    await audio.play();
-  } catch (error) {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.92;
-      window.speechSynthesis.speak(utterance);
-      showMessage("Using this device’s built-in voice for guidance.");
-      return;
-    }
-    showMessage(`${error.message} The written guidance remains available.`);
-  }
-}
-
-function loadPdfLibrary() {
+async function loadPdfLibrary() {
   if (window.CyberSaathiPDF) return Promise.resolve(window.CyberSaathiPDF);
   return new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-pdf-library]');
@@ -2137,7 +2117,7 @@ async function handleAction(action, target) {
   if (action === "send-login-otp") {
     const mobile = document.querySelector("#loginMobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
-      showMessage("Enter a 10-digit mobile number.");
+      showMessage("Enter a 10-digit mobile number.", "error");
       return;
     }
     state.auth.mobile = mobile;
@@ -2149,11 +2129,11 @@ async function handleAction(action, target) {
   }
   if (action === "verify-login-otp") {
     if (!state.auth.otpSent) {
-      showMessage("Get an OTP first.");
+      showMessage("Get an OTP first.", "error");
       return;
     }
     if (document.querySelector("#loginOtpInput").value.trim() !== "123456") {
-      showMessage("Use mocked OTP 123456.");
+      showMessage("Use mocked OTP 123456.", "error");
       return;
     }
     state.auth.otpVerified = true;
@@ -2166,7 +2146,7 @@ async function handleAction(action, target) {
   if (action === "send-signup-otp") {
     const mobile = document.querySelector("#signupMobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
-      showMessage("Enter a 10-digit mobile number.");
+      showMessage("Enter a 10-digit mobile number.", "error");
       return;
     }
     state.auth.mobile = mobile;
@@ -2179,11 +2159,11 @@ async function handleAction(action, target) {
   }
   if (action === "verify-signup-otp") {
     if (!state.auth.otpSent) {
-      showMessage("Get an OTP first.");
+      showMessage("Get an OTP first.", "error");
       return;
     }
     if (document.querySelector("#signupOtpInput").value.trim() !== "123456") {
-      showMessage("Use mocked OTP 123456.");
+      showMessage("Use mocked OTP 123456.", "error");
       return;
     }
     state.auth.otpVerified = true;
@@ -2193,7 +2173,7 @@ async function handleAction(action, target) {
   }
   if (action === "fill-signup-profile") {
     if (!state.auth.otpVerified) {
-      showMessage("Verify your mobile OTP before adding identity details.");
+      showMessage("Verify your mobile OTP before adding identity details.", "error");
       return;
     }
     state.reporter = {
@@ -2208,7 +2188,7 @@ async function handleAction(action, target) {
   }
   if (action === "process-signup-profile") {
     if (!state.auth.otpVerified) {
-      showMessage("Verify your mobile OTP before extracting identity details.");
+      showMessage("Verify your mobile OTP before extracting identity details.", "error");
       return;
     }
     await processSignupProfile();
@@ -2216,11 +2196,11 @@ async function handleAction(action, target) {
   }
   if (action === "save-signup") {
     if (!state.auth.otpVerified) {
-      showMessage("Verify a 10-digit mobile number first.");
+      showMessage("Verify a 10-digit mobile number first.", "error");
       return;
     }
     if (!state.auth.profileReady || !state.documents.reporter) {
-      showMessage("Extract identity details before saving.");
+      showMessage("Extract identity details before saving.", "error");
       return;
     }
     if (!validateRequired(".signup-profile-form")) return;
@@ -2272,7 +2252,7 @@ async function handleAction(action, target) {
   if (action === "send-tracking-otp") {
     const mobile = document.querySelector("#trackingMobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
-      showMessage("Enter a 10-digit mobile number.");
+      showMessage("Enter a 10-digit mobile number.", "error");
       return;
     }
     state.tracking.loginMobile = mobile;
@@ -2282,7 +2262,7 @@ async function handleAction(action, target) {
   }
   if (action === "verify-tracking-otp") {
     if (document.querySelector("#trackingOtpInput").value.trim() !== "123456") {
-      showMessage("Use mocked OTP 123456.");
+      showMessage("Use mocked OTP 123456.", "error");
       return;
     }
     state.auth.isSignedIn = true;
@@ -2325,7 +2305,7 @@ async function handleAction(action, target) {
   if (action === "send-wc-otp") {
     const mobile = document.querySelector("#wcMobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
-      showMessage("Enter a 10-digit mobile number.");
+      showMessage("Enter a 10-digit mobile number.", "error");
       return;
     }
     state.wc.loginMobile = mobile;
@@ -2335,7 +2315,7 @@ async function handleAction(action, target) {
   }
   if (action === "verify-wc-otp") {
     if (document.querySelector("#wcOtpInput").value.trim() !== "123456") {
-      showMessage("Use mocked OTP 123456.");
+      showMessage("Use mocked OTP 123456.", "error");
       return;
     }
     state.wc.mode = "login";
@@ -2371,10 +2351,6 @@ async function handleAction(action, target) {
     await processWcEvidence();
     return;
   }
-  if (action === "speak-wc-guidance") {
-    await speakText("You are in control. Review each prepared detail, change anything that is incorrect, and share only what feels safe.");
-    return;
-  }
   if (action === "refresh-wc-evidence") {
     const next = state.wc.evidence.platform === wcEvidenceSamples[0].platform ? 1 : 0;
     mockWcEvidence(next);
@@ -2401,7 +2377,7 @@ async function handleAction(action, target) {
     const idType = store.draftIdType || "Driving Licence";
     const idNumber = store.draftIdNumber;
     if (!idNumber) {
-      showMessage("Enter an ID number before adding.");
+      showMessage("Enter an ID number before adding.", "error");
       document.querySelector("#wcSuspectIdNumber")?.focus();
       return;
     }
@@ -2425,15 +2401,15 @@ async function handleAction(action, target) {
     const input = document.querySelector("#wcSuspectPhotoUpload");
     const file = input?.files?.[0];
     if (!file) {
-      showMessage("Choose a JPG or PNG photograph first.");
+      showMessage("Choose a JPG or PNG photograph first.", "error");
       return;
     }
     if (!/\.(jpe?g|png)$/i.test(file.name) && !/^image\/(jpeg|png)$/i.test(file.type)) {
-      showMessage("Upload a JPG/JPEG/PNG photograph only.");
+      showMessage("Upload a JPG/JPEG/PNG photograph only.", "error");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      showMessage("Suspect photograph must be 5 MB or smaller.");
+      showMessage("Suspect photograph must be 5 MB or smaller.", "error");
       return;
     }
     store.photoName = file.name;
@@ -2447,13 +2423,13 @@ async function handleAction(action, target) {
     if (!state.wc.completedSections.includes("incidentDetails")) {
       state.wc.activeSection = "incidentDetails";
       render("wcWorkspace");
-      showMessage("Complete Incident Details before previewing the report.");
+      showMessage("Complete Incident Details before previewing the report.", "error");
       return;
     }
     if (state.wc.mode === "login" && state.auth.isSignedIn && !state.wc.completedSections.includes("personalDetails")) {
       state.wc.activeSection = "personalDetails";
       render("wcWorkspace");
-      showMessage("Complete Personal Details before previewing the report.");
+      showMessage("Complete Personal Details before previewing the report.", "error");
       return;
     }
     render("wcPreview");
@@ -2468,7 +2444,7 @@ async function handleAction(action, target) {
     if (!validateRequired(".wc-complaint-form")) return;
     syncWcComplaint();
     if (state.wc.complaint.description.length < 200) {
-      showMessage("Additional information must be at least 200 characters.");
+      showMessage("Additional information must be at least 200 characters.", "error");
       return;
     }
     render("wcSuspect");
@@ -2481,7 +2457,7 @@ async function handleAction(action, target) {
   }
   if (action === "submit-wc-report") {
     if (!document.querySelector("#wcCertify").checked) {
-      showMessage("Please confirm the certification checkbox.");
+      showMessage("Please confirm the certification checkbox.", "error");
       return;
     }
     render("wcDone");
@@ -2512,7 +2488,7 @@ async function handleAction(action, target) {
   if (action === "send-otp") {
     const mobile = document.querySelector("#mobileInput").value.trim();
     if (!/^\d{10}$/.test(mobile)) {
-      showMessage("Enter a 10-digit mobile number.");
+      showMessage("Enter a 10-digit mobile number.", "error");
       return;
     }
     state.reporter.mobile = mobile;
@@ -2522,7 +2498,7 @@ async function handleAction(action, target) {
   }
   if (action === "verify-otp") {
     if (document.querySelector("#otpInput").value.trim() !== "123456") {
-      showMessage("Use mocked OTP 123456.");
+      showMessage("Use mocked OTP 123456.", "error");
       return;
     }
     state.financial.entry = "existing";
@@ -2546,13 +2522,13 @@ async function handleAction(action, target) {
   }
   if (action === "save-profile") {
     if (!state.auth.profileReady && !state.documents.reporter) {
-      showMessage("Extract identity details before saving.");
+      showMessage("Extract identity details before saving.", "error");
       document.querySelector("#reporterIdentityUpload")?.focus();
       return;
     }
     if (!validateRequired(".profile-form")) return;
     if (!state.documents.reporter) {
-      showMessage("Attach an identity document before saving.");
+      showMessage("Attach an identity document before saving.", "error");
       document.querySelector("#reporterIdentityUpload")?.focus();
       return;
     }
@@ -2573,7 +2549,7 @@ async function handleAction(action, target) {
   }
   if (action === "mock-evidence-and-continue") {
     if (!state.documents.reporter) {
-      showMessage("Complete the reporter identity step before using the sample.");
+      showMessage("Complete the reporter identity step before using the sample.", "error");
       return;
     }
     mockEvidence();
@@ -2584,7 +2560,7 @@ async function handleAction(action, target) {
   }
   if (action === "manual-financial-continue") {
     if (!state.documents.reporter) {
-      showMessage("Complete the reporter identity step before continuing.");
+      showMessage("Complete the reporter identity step before continuing.", "error");
       return;
     }
     if (!state.complaint.description?.trim()) state.complaint.description = draftDescription();
@@ -2622,7 +2598,7 @@ async function handleAction(action, target) {
     if (missingSection) {
       state.financial.activeSection = missingSection;
       render("financialWorkspace");
-      showMessage("Complete this required section before previewing the report.");
+      showMessage("Complete this required section before previewing the report.", "error");
       return;
     }
     render("preview");
@@ -2635,7 +2611,7 @@ async function handleAction(action, target) {
   }
   if (action === "submit-report") {
     if (!document.querySelector("#certify").checked) {
-      showMessage("Please confirm the certification checkbox.");
+      showMessage("Please confirm the certification checkbox.", "error");
       return;
     }
     state.financial.submittedAt = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
@@ -2650,7 +2626,7 @@ async function handleAction(action, target) {
       target.textContent = "Download report again";
     } catch (error) {
       target.textContent = "Try PDF download again";
-      showMessage(error.message);
+      showMessage(error.message, "error");
     } finally {
       target.disabled = false;
     }

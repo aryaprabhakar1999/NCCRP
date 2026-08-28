@@ -41,7 +41,7 @@ export async function extractStructured(flowType, content) {
   if (!config) throw new Error("Unknown reporting flow.");
   const client = openAiClient();
   const response = await client.responses.parse({
-    model: process.env.OPENAI_EXTRACT_MODEL || "gpt-5.6",
+    model: process.env.OPENAI_EXTRACT_MODEL || "gpt-4o-mini",
     input: [
       { role: "system", content: config.prompt },
       { role: "user", content },

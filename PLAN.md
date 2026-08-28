@@ -1,14 +1,14 @@
 # OpenAI Multimodal Integration Plan
 
 ## Summary
-Convert the current static prototype into a Vercel-ready app with a small server-side API layer that connects to OpenAI models for evidence parsing, voice-note transcription, document/sheet extraction, incident-draft generation, and text-to-speech. The browser must never receive the OpenAI API key.
+Convert the current static prototype into a Vercel-ready app with a small server-side API layer that connects to OpenAI models for evidence parsing, voice-note transcription, document/sheet extraction, incident-draft generation. The browser must never receive the OpenAI API key.
 
-Sources: [Responses API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create), [file/image inputs](https://developers.openai.com/api/reference/resources/files), [audio speech](https://developers.openai.com/api/docs/models/gpt-4o-mini-tts), [audio transcription examples](https://developers.openai.com/api/reference/ruby).
+Sources: [Responses API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create), [file/image inputs](https://developers.openai.com/api/reference/resources/files), [audio transcription examples](https://developers.openai.com/api/reference/ruby).
 
 ## Key Architecture
 - Move from pure static files to a Vercel Node app:
   - Keep `index.html`, `styles.css`, and `app.js`.
-  - Add `/api/extract-evidence`, `/api/transcribe-audio`, and `/api/text-to-speech`.
+  - Add `/api/extract-evidence`, `/api/transcribe-audio`.
   - Store `OPENAI_API_KEY` only as a Vercel environment variable.
 - Use OpenAI Responses API for structured extraction from:
   - Screenshots and images: payment receipts, UPI screenshots, chat screenshots, social screenshots.
@@ -21,9 +21,6 @@ Sources: [Responses API](https://developers.openai.com/api/reference/cli/resourc
 - Use audio transcription for voice notes:
   - Upload voice note to `/api/transcribe-audio`.
   - Return transcript plus a cleaned incident-description draft.
-- Use text-to-speech:
-  - `/api/text-to-speech` accepts short UI guidance or draft summary text.
-  - Returns an audio blob/URL for playback in the form.
 
 ## Input Screen Updates
 - Replace each current “mock parse” upload area with a shared evidence input component:
@@ -51,7 +48,6 @@ Sources: [Responses API](https://developers.openai.com/api/reference/cli/resourc
 - `POST /api/transcribe-audio`
   - Input: audio file and `flowType`.
   - Output: transcript, extracted fields where possible, and draft description.
-- `POST /api/text-to-speech`
   - Input: `{ text, voiceStyle }`.
   - Output: playable audio file/blob.
 - All API responses must include:
@@ -89,5 +85,4 @@ Sources: [Responses API](https://developers.openai.com/api/reference/cli/resourc
 - Use configurable model names through environment variables:
   - `OPENAI_EXTRACT_MODEL` for multimodal extraction.
   - `OPENAI_TRANSCRIBE_MODEL` for audio transcription.
-  - `OPENAI_TTS_MODEL` for speech.
 - Keep the current UI as the base and progressively upgrade upload buttons from mocked parsing to live OpenAI-backed parsing with demo fallback.

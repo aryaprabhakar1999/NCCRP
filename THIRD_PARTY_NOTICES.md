@@ -18,7 +18,7 @@ Transitive packages are likewise permissive (MIT, Apache-2.0, BSD, ISC, or dual-
 
 ## Not open-source / paid services
 
-- **OpenAI API** (models used for extraction, transcription, and TTS) is a commercial service. Using live AI features requires your own API key and acceptance of OpenAI’s terms. The `openai` npm package is Apache-2.0; the hosted API is not redistributed here.
+- **OpenAI API** (models used for evidence extraction and voice-note transcription) is a commercial service. Using live AI features requires your own API key and acceptance of OpenAI’s terms. The `openai` npm package is Apache-2.0; the hosted API is not redistributed here.
 - Official government sites and helplines (`cybercrime.gov.in`, `1930`, `112`) are linked for citizen guidance only. No government logos, trademarks, or production systems are embedded.
 
 ## Project assets and data

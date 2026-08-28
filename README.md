@@ -15,7 +15,6 @@ An independent hackathon prototype that helps a person prepare a cybercrime repo
 - Complete financial-fraud prototype journey with citizen review and mock submission
 - Secondary women/children and complaint-tracking prototype paths
 - OpenAI-assisted image, PDF, DOCX, XLSX, CSV, pasted-text, and voice-note handling
-- Text-to-speech guidance with browser speech fallback
 - Synthetic fallback when OpenAI is unavailable
 
 Uploads are retained in memory only for the current browser session so citizens can review them in the relevant report section. They are cleared on refresh or when starting another report, and are not intentionally persisted or logged by the server. Vercel Functions have a 4.5 MB request ceiling, so the UI enforces a safer 4 MB total upload limit.
@@ -36,10 +35,8 @@ Run `npm run build` after changing `app.js` or `pdf-entry.js`, then serve the st
 Add these Project Environment Variables for Production and Preview:
 
 - `OPENAI_API_KEY` — required for live AI features
-- `OPENAI_EXTRACT_MODEL` — defaults to `gpt-5.6`
-- `OPENAI_TRANSCRIBE_MODEL` — defaults to `gpt-4o-mini-transcribe`
-- `OPENAI_TTS_MODEL` — defaults to `gpt-4o-mini-tts`
-- `OPENAI_TTS_VOICE` — defaults to `coral`
+- `OPENAI_EXTRACT_MODEL` — defaults to `gpt-4o-mini`
+- `OPENAI_TRANSCRIBE_MODEL` — defaults to `whisper-1`
 
 Then redeploy the latest commit and verify:
 

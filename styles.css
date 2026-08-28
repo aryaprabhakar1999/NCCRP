@@ -36,15 +36,24 @@ body {
   z-index: 100;
   width: min(560px, calc(100vw - 24px));
   padding: 12px 18px;
-  background: #b42318;
   color: #fff;
-  border: 1px solid #912018;
   border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(180, 35, 24, 0.28);
   font-weight: 700;
   font-size: 15px;
   line-height: 1.4;
   text-align: center;
+}
+
+.toast-error {
+  background: #b42318;
+  border: 1px solid #912018;
+  box-shadow: 0 10px 28px rgba(180, 35, 24, 0.28);
+}
+
+.toast-info {
+  background: #175cd3;
+  border: 1px solid #1849a9;
+  box-shadow: 0 10px 28px rgba(23, 92, 211, 0.28);
 }
 
 button,
@@ -658,8 +667,22 @@ small,
   display: grid;
   grid-template-columns: minmax(260px, 0.8fr) 70px minmax(380px, 1.2fr);
   gap: 22px;
-  align-items: stretch;
+  align-items: start;
   margin-top: 28px;
+  max-height: calc(100vh - 220px);
+}
+
+.prereq-list {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
+}
+
+.prereq-list .secondary {
+  margin-top: 18px;
+  width: 100%;
 }
 
 .prereq-list,
@@ -668,6 +691,11 @@ small,
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fbfdfc;
+}
+
+.evidence-card {
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
 }
 
 .prereq-list h3,
@@ -810,7 +838,8 @@ small,
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   width: min(1220px, calc(100% - 32px));
-  min-height: calc(100vh - 170px);
+  height: calc(100vh - 170px);
+  min-height: 480px;
   margin: 28px auto;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -823,6 +852,8 @@ small,
   padding: 28px 22px;
   border-right: 1px solid var(--line);
   background: #f5f9f8;
+  overflow-y: auto;
+  align-self: stretch;
 }
 
 .workspace-back {
@@ -899,6 +930,9 @@ small,
 
 .report-section {
   padding: clamp(26px, 5vw, 52px);
+  overflow-y: auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .section-intro {
@@ -1407,6 +1441,14 @@ td input {
 
   .prereq-layout {
     grid-template-columns: 1fr;
+    max-height: none;
+  }
+
+  .prereq-list,
+  .evidence-card {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .or-divider {
@@ -1424,11 +1466,20 @@ td input {
 
   .report-workspace {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
   }
 
   .report-sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    overflow: visible;
+  }
+
+  .report-section {
+    height: auto;
+    overflow: visible;
   }
 
   .section-nav {

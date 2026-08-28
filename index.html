@@ -284,6 +284,7 @@
               <li>Only the personal details you feel safe sharing</li>
             </ul>
             <p class="hint">You can correct or complete missing information in the report.</p>
+            <button class="secondary" type="button" data-action="start-wc-manual">Enter details manually</button>
           </div>
           <div class="or-divider" aria-hidden="true"><span>or</span></div>
           <div class="evidence-card">
@@ -313,9 +314,8 @@
             </details>
             <div class="processing-state hidden" id="wcProcessingState" role="status" aria-live="polite"></div>
             <div class="button-stack">
-              <button id="prepareWcButton" class="primary" type="button" data-action="process-wc-evidence" disabled>Prepare report from evidence</button>
+              <button id="prepareWcButton" class="primary" type="button" data-action="process-wc-evidence" disabled>Upload and create report</button>
               <button class="secondary" type="button" data-action="mock-wc-evidence">Use sample</button>
-              <button class="secondary" type="button" data-action="start-wc-manual">Enter details manually</button>
             </div>
             <small class="privacy-line">Files are processed for this draft and are not intentionally stored.</small>
           </div>
@@ -336,7 +336,7 @@
     <template id="wc-workspace-template">
       <section class="report-workspace">
         <aside class="report-sidebar" aria-label="Women and children report sections">
-          <button class="ghost workspace-back" type="button" data-action="back-to-wc-evidence">Back to evidence</button>
+          <button class="ghost workspace-back" type="button" data-action="back-to-wc-evidence">Back</button>
           <p class="eyebrow">Your report</p>
           <nav id="wcSectionNav" class="section-nav wc-section-nav" aria-label="Women and children report section navigation"></nav>
           <p id="wcSidebarHelp" class="sidebar-help">You can stay anonymous. Share only what feels safe.</p>
@@ -357,7 +357,6 @@
           <textarea id="wcTimeline"></textarea>
         </label>
         <div class="button-row">
-          <button class="secondary" type="button" data-action="speak-wc-guidance">Read guidance aloud</button>
           <button class="primary" type="button" data-action="save-wc-review">Complaint details</button>
         </div>
       </section>
@@ -413,7 +412,7 @@
           <strong>This prototype cannot provide emergency help</strong>
           <span>For immediate danger call <a href="tel:112">112</a>. For a real cybercrime report, use <a href="https://www.cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>.</span>
         </aside>
-        <button class="primary" type="button" data-action="go-home">Start another report</button>
+        <button class="primary" type="button" data-action="go-home">Go to Home</button>
       </section>
     </template>
 
@@ -505,6 +504,7 @@
               <li>Any other information you remember</li>
             </ul>
             <p class="hint">You can correct or complete missing information in the report.</p>
+            <button id="manualFinancialButton" class="secondary" type="button" data-action="manual-financial-continue">Enter details manually</button>
           </div>
           <div class="or-divider" aria-hidden="true"><span>or</span></div>
           <div class="evidence-card">
@@ -534,9 +534,8 @@
             </details>
             <div class="processing-state hidden" id="financialProcessingState" role="status" aria-live="polite"></div>
             <div class="button-stack">
-              <button id="prepareFinancialButton" class="primary" type="button" data-action="process-financial-evidence" disabled>Prepare report from evidence</button>
+              <button id="prepareFinancialButton" class="primary" type="button" data-action="process-financial-evidence" disabled>Upload and create report</button>
               <button class="secondary" type="button" data-action="mock-evidence-and-continue">Use sample</button>
-              <button id="manualFinancialButton" class="secondary" type="button" data-action="manual-financial-continue">Enter details manually</button>
             </div>
             <small class="privacy-line">Files are processed for this draft and are not intentionally stored.</small>
           </div>
@@ -547,7 +546,7 @@
     <template id="financial-workspace-template">
       <section class="report-workspace">
         <aside class="report-sidebar" aria-label="Financial report sections">
-          <button class="ghost workspace-back" type="button" data-action="back-to-evidence">Back to evidence</button>
+          <button class="ghost workspace-back" type="button" data-action="back-to-evidence">Back</button>
           <p class="eyebrow">Your report</p>
           <nav class="section-nav" aria-label="Financial report section navigation">
             <button type="button" data-report-section="myDetails"><span>1</span><strong>Personal Details</strong><small>About the complainant</small></button>
@@ -589,7 +588,7 @@
         </aside>
         <div class="button-row centered">
           <button class="secondary" type="button" data-next="trackingLookup">Track sample complaint</button>
-          <button class="primary" type="button" data-action="go-home">Start another report</button>
+          <button class="primary" type="button" data-action="go-home">Go to Home</button>
         </div>
       </section>
     </template>

@@ -43,7 +43,8 @@ try {
   await desktop.locator('[data-action="start-financial-report"]').click();
   assert.equal(await desktop.locator("h2").textContent(), "Keep these details ready");
   assert.equal(await desktop.locator("details.other-inputs[open]").count(), 0);
-  assert.equal(await desktop.locator('[data-action="manual-financial-continue"]').count(), 1);
+  assert.equal(await desktop.locator(".prereq-list [data-action=\"manual-financial-continue\"]").count(), 1);
+  assert.equal(await desktop.locator("#prepareFinancialButton").textContent(), "Upload and create report");
   assert.equal(await desktop.locator("#prepareFinancialButton").isDisabled(), true);
   await desktop.screenshot({ path: "/tmp/cyber-saathi-prerequisites.png", fullPage: true });
   await desktop.locator('[data-action="mock-evidence-and-continue"]').click();
@@ -121,7 +122,7 @@ try {
   const otherDownload = await otherDownloadPromise;
   assert.ok((await stat(await otherDownload.path())).size > 1000, "Other-person PDF should not be empty");
 
-  await desktop.locator('[data-action="go-home"]').filter({ hasText: "Start another report" }).click();
+  await desktop.locator('[data-action="go-home"]').filter({ hasText: "Go to Home" }).click();
   assert.match(await desktop.locator("#authButton").textContent(), /Signed in/);
   await desktop.locator('[data-next="trackingHome"]').click();
   await desktop.locator('[data-action="open-tracking-list"]').click();
