@@ -1661,10 +1661,11 @@ async function postForm(url, formData, timeoutMs = 45000) {
   }
 }
 
-async function extractEvidence(flowType, fileInput, pastedText) {
+async function extractEvidence(flowType, fileInput, pastedText, extras = {}) {
   const formData = new FormData();
   formData.append("flowType", flowType);
   if (pastedText?.trim()) formData.append("pastedText", pastedText.trim());
+  if (extras.documentType) formData.append("documentType", extras.documentType);
   Array.from(fileInput?.files || []).forEach((file) => formData.append("files", file));
   return postForm("/api/extract-evidence", formData);
 }
@@ -1784,7 +1785,7 @@ async function processProfileFrom(input, type, displaySelector, returnScreen) {
     if (!input.files.length) throw new Error("Choose an identity image or PDF.");
     retainIdentityDocument("reporter", input.files[0], type);
     try {
-      const payload = await extractEvidence("profile", input, "");
+      const payload = await extractEvidence("profile", input, "", { documentType: type });
       state.reporter = { ...state.reporter, ...(payload.data.profile || {}) };
       state.ai.profile.mode = payload.mode;
     } catch {
@@ -1808,7 +1809,7 @@ async function processVictimIdentity(input, type) {
   renderDocumentDisplay("#victimIdentityDocument", state.documents.victim);
   try {
     assertUploadSize(input);
-    const payload = await extractEvidence("profile", input, "");
+    const payload = await extractEvidence("profile", input, "", { documentType: type });
     state.victim = payload.mode === "demo_fallback"
       ? { ...sampleVictim }
       : { ...state.victim, ...(payload.data.profile || {}) };

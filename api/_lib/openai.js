@@ -22,11 +22,66 @@ Mark uncertain or inferred fields for citizen review.`,
   profile: {
     schema: profileSchema,
     formatName: "profile_evidence",
-    prompt: `Extract profile fields from this synthetic Indian identity-document sample only.
-Use YYYY-MM-DD for date of birth. Do not infer values that are not present. Return empty strings for missing fields.
-Split the address into the requested fields when possible and mark uncertain fields for review.`,
+    prompt: `You are reading an Indian identity document image or PDF (Aadhaar, PAN, Voter ID, Driving Licence, or similar).
+Extract every visible personal field carefully. Read small print, bilingual labels (Hindi/English), and address lines.
+
+Rules:
+- Use only values visible on the document. Do not invent mobile, email, police station, or tehsil if absent.
+- Return empty strings for fields that are not visible.
+- Date of birth must be YYYY-MM-DD (convert DD/MM/YYYY or DD-MM-YYYY).
+- Gender: map M/Male/पुरुष to "Male"; F/Female/महिला to "Female". If unclear, leave empty and list gender in needsReview.
+- Title: Miss/Mrs/Ms/Mr/Mx when clearly implied by gender/name style; otherwise empty.
+- Name: full name as printed (Latin script preferred when both scripts appear).
+- Relation: if Father/Husband/Mother name is printed (S/O, D/O, W/O, C/O), set relationType and relationName.
+- Address: split when possible into house, street, colony, city, tehsil, district, state, pincode, country.
+  - If the address is one block, put the full readable address into street and still fill city/state/district/pincode when visible.
+  - Pincode is the 6-digit Indian PIN when present.
+  - Country is "India" when the document is an Indian ID.
+- Never copy Aadhaar/PAN/Voter full ID numbers into any profile field.
+- Set confidence low and add needsReview for unclear name, dob, gender, or address.`,
   },
 };
+
+function normalizeGender(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (/^(f|female|महिला|stree|stri)$/i.test(raw) || raw.includes("female") || raw.includes("महिला")) return "Female";
+  if (/^(m|male|पुरुष|purush)$/i.test(raw) || raw.includes("male") || raw.includes("पुरुष")) return "Male";
+  if (raw.includes("non-binary") || raw.includes("nonbinary")) return "Non-binary";
+  if (["Female", "Male", "Non-binary", "Prefer not to say"].includes(value)) return value;
+  return "";
+}
+
+function normalizeDob(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const match = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (!match) return raw;
+  const day = match[1].padStart(2, "0");
+  const month = match[2].padStart(2, "0");
+  return `${match[3]}-${month}-${day}`;
+}
+
+function normalizeProfileResult(data) {
+  if (!data?.profile) return data;
+  const profile = { ...data.profile };
+  profile.gender = normalizeGender(profile.gender);
+  profile.dob = normalizeDob(profile.dob);
+  profile.pincode = String(profile.pincode || "").replace(/\D/g, "").slice(0, 6);
+  if (!profile.country && (profile.state || profile.district || profile.pincode)) profile.country = "India";
+  if (!profile.street && (profile.house || profile.colony || profile.city)) {
+    profile.street = [profile.house, profile.colony, profile.city].filter(Boolean).join(", ");
+  }
+  const needsReview = new Set(data.needsReview || []);
+  if (!profile.gender) needsReview.add("gender");
+  if (!profile.street && !profile.colony && !profile.city) needsReview.add("address");
+  return {
+    ...data,
+    profile,
+    needsReview: [...needsReview],
+  };
+}
 
 export function hasOpenAiKey() {
   return Boolean(process.env.OPENAI_API_KEY);
@@ -49,5 +104,6 @@ export async function extractStructured(flowType, content) {
     text: { format: zodTextFormat(config.schema, config.formatName) },
   });
   if (!response.output_parsed) throw new Error("The model did not return a usable extraction.");
+  if (flowType === "profile") return normalizeProfileResult(response.output_parsed);
   return response.output_parsed;
 }

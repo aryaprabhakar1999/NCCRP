@@ -29,6 +29,13 @@ export default async function handler(request, response) {
     const content = await buildModelContent(upload.files, upload.fields.pastedText);
     if (!content.length) return sendError(response, 400, "No supported evidence content was found.");
 
+    if (flowType === "profile" && upload.fields.documentType) {
+      content.unshift({
+        type: "input_text",
+        text: `Document type selected by citizen: ${upload.fields.documentType}. Prefer labels typical of that Indian ID.`,
+      });
+    }
+
     try {
       const data = await extractStructured(flowType, content);
       return sendJson(response, 200, {

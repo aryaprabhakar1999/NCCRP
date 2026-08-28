@@ -61,7 +61,7 @@ export async function buildModelContent(files, pastedText) {
       content.push({
         type: "input_image",
         image_url: `data:${file.mimeType};base64,${file.buffer.toString("base64")}`,
-        detail: "auto",
+        detail: "high",
       });
     } else if (extension === ".pdf") {
       content.push({
