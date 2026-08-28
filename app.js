@@ -140,6 +140,27 @@ const wcComplaintFields = [
   ["occurredAt", "Where did the incident occur?", "select", ["Email", "Facebook", "Instagram", "Snapchat", "Twitter", "WhatsApp", "Website URL", "YouTube", "LinkedIn", "Telegram", "Other"]],
 ];
 
+/** Human labels for AI needsReview keys (financial + women/children). */
+const needsReviewLabels = {
+  ...Object.fromEntries(transactionFields.map(([key, label]) => [key, label])),
+  ...Object.fromEntries(wcEvidenceFields.map(([key, label]) => [key, label])),
+  ...Object.fromEntries(wcComplaintFields.map(([key, label]) => [key, label])),
+  suggestedCategory: "Category of complaint",
+  platform: "Where did the incident occur?",
+  people: "Persons or usernames visible",
+  nature: "Nature of content",
+};
+
+/** Map WC AI review keys onto complaint / description controls. */
+const wcNeedsReviewFieldMap = {
+  suggestedCategory: "category",
+  platform: "occurredAt",
+  date: "date",
+  time: "time",
+  people: "__wcDescription",
+  nature: "__wcDescription",
+};
+
 const wcSuspectIdTypes = [
   "Mobile No.",
   "Email",
@@ -448,7 +469,10 @@ function updateAuthButton() {
 function makeControl([key, label, type = "text", options, settings = {}], values, className = "") {
   const wrapper = document.createElement("label");
   if (className) wrapper.className = className;
-  wrapper.textContent = label;
+
+  const title = document.createElement("span");
+  title.className = "field-label";
+  title.append(document.createTextNode(label));
 
   let field;
   if (type === "select") {
@@ -472,12 +496,17 @@ function makeControl([key, label, type = "text", options, settings = {}], values
   field.id = `${state.current}-${key}`;
   if (!settings.optional && !["policeStation", "delayReason", "suspectAddress", "reference", "people", "nature", "email", "tehsil", "colony"].includes(key) && !key.startsWith("suspect") && !state.current.toLowerCase().includes("suspect")) {
     field.required = true;
-    wrapper.append(document.createTextNode(" "));
-    const required = document.createElement("small");
-    required.textContent = "Required";
-    wrapper.append(required);
+    const mark = document.createElement("span");
+    mark.className = "required-mark";
+    mark.setAttribute("aria-hidden", "true");
+    mark.textContent = "*";
+    title.append(mark);
+    const sr = document.createElement("span");
+    sr.className = "sr-only";
+    sr.textContent = "required";
+    title.append(sr);
   }
-  wrapper.append(field);
+  wrapper.append(title, field);
   return wrapper;
 }
 
@@ -1053,6 +1082,7 @@ function renderWcWorkspace() {
     description.value = state.wc.complaint.description || draftWcDescription();
     updateWcDescriptionCount();
     description.addEventListener("input", updateWcDescriptionCount);
+    applyNeedsReviewHighlights("#wcSectionContent", state.ai.womenChildren.needsReview, wcNeedsReviewFieldMap);
     updateAttentionBanner("#wcAttentionBanner", state.ai.womenChildren.needsReview);
   }
 }
@@ -1107,21 +1137,67 @@ function changeWcSection(nextSection, validateCurrent = true) {
   render("wcWorkspace");
 }
 
+function labelForNeedsReview(key) {
+  return needsReviewLabels[key] || key;
+}
+
+function formatAttentionMessage(needsReview = [], { prefix = "" } = {}) {
+  const keys = Array.isArray(needsReview) ? needsReview.filter(Boolean) : [];
+  if (!keys.length) return "";
+  const names = [...new Set(keys.map(labelForNeedsReview))];
+  const list = names.join("; ");
+  const countPhrase = keys.length === 1
+    ? "1 detail needs your attention"
+    : `${keys.length} details need your attention`;
+  const body = `${countPhrase}: ${list}.`;
+  return prefix ? `${prefix} ${body}` : body;
+}
+
+function markNeedsCheck(target) {
+  if (!target) return;
+  target.querySelector(".needs-check-chip")?.remove();
+  target.classList.add("confidence-low");
+  const chip = document.createElement("span");
+  chip.className = "needs-check-chip";
+  chip.textContent = "Needs check";
+  target.append(chip);
+}
+
+function clearNeedsCheck(root) {
+  if (!root) return;
+  root.querySelectorAll(".needs-check-chip").forEach((chip) => chip.remove());
+  root.querySelectorAll(".confidence-low").forEach((el) => el.classList.remove("confidence-low"));
+}
+
+function applyNeedsReviewHighlights(rootSelector, needsReview = [], fieldKeyMap = {}) {
+  const root = typeof rootSelector === "string" ? document.querySelector(rootSelector) : rootSelector;
+  if (!root) return;
+  clearNeedsCheck(root);
+  const keys = Array.isArray(needsReview) ? needsReview : [];
+  const mapped = new Set(keys.map((key) => fieldKeyMap[key] || key));
+  mapped.forEach((fieldKey) => {
+    if (fieldKey === "__wcDescription") {
+      const description = document.querySelector("#wcDescription")?.closest("label")
+        || document.querySelector("#wcDescription")?.parentElement;
+      markNeedsCheck(description);
+      return;
+    }
+    const field = root.querySelector(`[data-field="${fieldKey}"]`);
+    const label = field?.closest("label");
+    if (label) markNeedsCheck(label);
+  });
+}
+
 function applyTransactionConfidence() {
   const firstCard = document.querySelector(".transaction-card");
   if (!firstCard) return;
+  clearNeedsCheck(firstCard);
   firstCard.querySelectorAll("[data-field]").forEach((field) => {
     const key = field.dataset.field;
     const label = field.closest("label");
     if (!label) return;
-    label.querySelector(".needs-check-chip")?.remove();
-    label.classList.remove("confidence-low");
     if ((state.ai.financial.confidence[key] ?? 1) < 0.75 || state.ai.financial.needsReview.includes(key)) {
-      label.classList.add("confidence-low");
-      const chip = document.createElement("span");
-      chip.className = "needs-check-chip";
-      chip.textContent = "Needs check";
-      label.append(chip);
+      markNeedsCheck(label);
     }
   });
   updateAttentionBanner("#financialAttentionBanner", state.ai.financial.needsReview);
@@ -1137,9 +1213,7 @@ function updateAttentionBanner(selector, needsReview = []) {
     return;
   }
   banner.classList.remove("hidden");
-  banner.textContent = count === 1
-    ? "1 detail needs your attention."
-    : `${count} details need your attention.`;
+  banner.textContent = formatAttentionMessage(needsReview);
 }
 
 function sleep(ms) {
@@ -1172,9 +1246,7 @@ function classifyFinancialExtraction(payload) {
   if (needsReview.length) {
     return {
       kind: "low",
-      message: needsReview.length === 1
-        ? "We found most details. 1 detail needs your attention."
-        : `We found most details. ${needsReview.length} details need your attention.`,
+      message: formatAttentionMessage(needsReview, { prefix: "We found most details." }),
     };
   }
   return {
@@ -1203,9 +1275,7 @@ function classifyWcExtraction(payload) {
   if (needsReview.length) {
     return {
       kind: "low",
-      message: needsReview.length === 1
-        ? "We found most details. 1 detail needs your attention."
-        : `We found most details. ${needsReview.length} details need your attention.`,
+      message: formatAttentionMessage(needsReview, { prefix: "We found most details." }),
     };
   }
   return {
@@ -1343,6 +1413,7 @@ function renderWcReview() {
   updateModeBadge("#wcExtractionMode", state.ai.womenChildren);
   renderForm(".wc-evidence-form", wcEvidenceFields, state.wc.evidence);
   document.querySelector("#wcTimeline").value = state.wc.evidence.timeline || "";
+  applyNeedsReviewHighlights(".wc-evidence-form", state.ai.womenChildren.needsReview);
 }
 
 function updateModeBadge(selector, aiState) {
