@@ -778,7 +778,7 @@ function sectionMarkup(section) {
     return `
       <p class="eyebrow">Section 1 of 3</p>
       <h2>Personal Details</h2>
-      <p class="section-intro">First tell us who was affected. This keeps the reporting user separate from the victim when they are different people.</p>
+      <p class="section-intro">Tell us who is filing and who was affected. This separates the reporting user from the victim when they are different people, and keeps identity documents ready for a real complaint later.</p>
       <fieldset class="report-for-choice">
         <legend>Who was affected?</legend>
         <label><input type="radio" name="reportFor" value="self" ${state.financial.reportFor === "self" ? "checked" : ""} /> Me</label>
@@ -796,7 +796,9 @@ function sectionMarkup(section) {
     return `
       <p class="eyebrow">Section 2 of 3</p>
       <h2>Incident Details</h2>
+      <div id="financialAttentionBanner" class="attention-banner hidden" role="status"></div>
       <div id="financialExtractionMode" class="mode-badge">AI prepared · Needs your review</div>
+      <p class="section-intro">Describe what happened and check money-movement facts (amount, UTR, date, app). AI may prefill from your evidence—you must review every field before continuing.</p>
       <p class="support-note">Check the amount and UTR carefully. AI can make mistakes, and every field remains editable.</p>
       <section class="retained-evidence" aria-labelledby="retainedEvidenceHeading">
         <h3 id="retainedEvidenceHeading">Attached evidence</h3>
@@ -822,7 +824,7 @@ function sectionMarkup(section) {
   return `
     <p class="eyebrow">Section 3 of 3 · Optional</p>
     <h2>Suspect Details</h2>
-    <p class="section-intro">Share only what you know. You can skip this section without blocking the report.</p>
+    <p class="section-intro">Optional. Share only suspect information you are sure about. Skipping this does not block the prototype report.</p>
     <label class="inline-check"><input id="shareSuspect" type="checkbox" /> I have suspect details to share</label>
     <div id="financialSuspectFields" class="muted-section">
       ${suspectDetailsFieldsMarkup()}
@@ -950,7 +952,7 @@ function wcSectionMarkup(section) {
         <strong>Are you or someone else in immediate danger?</strong>
         <span>Call India’s emergency number <a href="tel:112">112</a>. This prototype cannot provide emergency help.</span>
       </aside>
-      <p class="section-intro">Your signed-in details are prefilled. You can still choose how much contact information appears in this report.</p>
+      <p class="section-intro">Choose how much of your signed-in identity appears in this report. You can limit contact details if that feels safer.</p>
       <div class="form-grid wc-personal-form"></div>
       <div class="section-actions">
         <button class="secondary" type="button" data-action="back-to-wc-evidence">Back</button>
@@ -964,6 +966,7 @@ function wcSectionMarkup(section) {
     return `
       <p class="eyebrow">${eyebrow}</p>
       <h2>Suspect Details</h2>
+      <p class="section-intro">Optional identifiers, photo, or notes that may help an investigation. Skip if unsure.</p>
       <p class="support-note">Please share the details of the suspect. Any information provided will be kept confidential and may help during the investigation.</p>
       ${suspectDetailsFieldsMarkup()}
       <div class="section-actions">
@@ -977,6 +980,8 @@ function wcSectionMarkup(section) {
   return `
     <p class="eyebrow">${eyebrow}</p>
     <h2>Incident Details</h2>
+    <div id="wcAttentionBanner" class="attention-banner hidden" role="status"></div>
+    <p class="section-intro">Record what happened in plain language—category, when, where, and additional information. Share only what feels safe; this drafts the complaint narrative.</p>
     <p class="support-note">Kindly fill in the form with details of the crime. Share only what feels safe.</p>
     <div class="form-grid wc-complaint-form"></div>
     <label class="wide-field">Please provide any additional information about the incident
@@ -1048,6 +1053,7 @@ function renderWcWorkspace() {
     description.value = state.wc.complaint.description || draftWcDescription();
     updateWcDescriptionCount();
     description.addEventListener("input", updateWcDescriptionCount);
+    updateAttentionBanner("#wcAttentionBanner", state.ai.womenChildren.needsReview);
   }
 }
 
@@ -1106,10 +1112,106 @@ function applyTransactionConfidence() {
   if (!firstCard) return;
   firstCard.querySelectorAll("[data-field]").forEach((field) => {
     const key = field.dataset.field;
+    const label = field.closest("label");
+    if (!label) return;
+    label.querySelector(".needs-check-chip")?.remove();
+    label.classList.remove("confidence-low");
     if ((state.ai.financial.confidence[key] ?? 1) < 0.75 || state.ai.financial.needsReview.includes(key)) {
-      field.closest("label")?.classList.add("confidence-low");
+      label.classList.add("confidence-low");
+      const chip = document.createElement("span");
+      chip.className = "needs-check-chip";
+      chip.textContent = "Needs check";
+      label.append(chip);
     }
   });
+  updateAttentionBanner("#financialAttentionBanner", state.ai.financial.needsReview);
+}
+
+function updateAttentionBanner(selector, needsReview = []) {
+  const banner = document.querySelector(selector);
+  if (!banner) return;
+  const count = Array.isArray(needsReview) ? needsReview.length : 0;
+  if (!count) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  banner.textContent = count === 1
+    ? "1 detail needs your attention."
+    : `${count} details need your attention.`;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function runProgressiveProcessing(selector, steps) {
+  for (const step of steps) {
+    setProcessing(selector, step);
+    await sleep(450);
+  }
+}
+
+function classifyFinancialExtraction(payload) {
+  const transaction = payload?.data?.transaction || {};
+  const needsReview = payload?.data?.needsReview || [];
+  const hasCore = Boolean(transaction.utr || transaction.amount || transaction.date);
+  if (!hasCore && payload?.mode === "live_openai") {
+    return {
+      kind: "wrong_or_empty",
+      message: "This doesn't look like payment or incident evidence. Try a bank SMS, receipt, payment-app screenshot, or conversation screenshot.",
+    };
+  }
+  if (!hasCore) {
+    return {
+      kind: "nothing",
+      message: "We couldn't read the details clearly. You can still report this—review and complete the fields below.",
+    };
+  }
+  if (needsReview.length) {
+    return {
+      kind: "low",
+      message: needsReview.length === 1
+        ? "We found most details. 1 detail needs your attention."
+        : `We found most details. ${needsReview.length} details need your attention.`,
+    };
+  }
+  return {
+    kind: "high",
+    message: "We found these details. Please review before submitting.",
+  };
+}
+
+function classifyWcExtraction(payload) {
+  const evidence = payload?.data?.evidence || {};
+  const complaint = payload?.data?.complaint || {};
+  const needsReview = payload?.data?.needsReview || [];
+  const hasCore = Boolean(evidence.platform || complaint.category || complaint.description || evidence.timeline);
+  if (!hasCore && payload?.mode === "live_openai") {
+    return {
+      kind: "wrong_or_empty",
+      message: "This doesn't look like payment or incident evidence. Try a bank SMS, receipt, payment-app screenshot, or conversation screenshot.",
+    };
+  }
+  if (!hasCore) {
+    return {
+      kind: "nothing",
+      message: "We couldn't read the details clearly. You can still report this—review and complete the fields below.",
+    };
+  }
+  if (needsReview.length) {
+    return {
+      kind: "low",
+      message: needsReview.length === 1
+        ? "We found most details. 1 detail needs your attention."
+        : `We found most details. ${needsReview.length} details need your attention.`,
+    };
+  }
+  return {
+    kind: "high",
+    message: "We found these details. Please review before submitting.",
+  };
 }
 
 function saveFinancialSection(section, validate = true) {
@@ -1183,9 +1285,10 @@ function renderExtraction() {
       const control = makeControl([key, label, type, options], transaction);
       if ((state.ai.financial.confidence[key] ?? 1) < 0.75 || state.ai.financial.needsReview.includes(key)) {
         value.classList.add("confidence-low");
-        const note = document.createElement("small");
-        note.textContent = "Please check this value";
-        control.append(note);
+        const chip = document.createElement("span");
+        chip.className = "needs-check-chip";
+        chip.textContent = "Needs check";
+        control.append(chip);
       }
       value.append(control);
       row.append(heading, value);
@@ -1719,17 +1822,23 @@ async function processFinancialEvidence() {
       throw new Error("Add a file, paste a message, record a voice note, or choose “Use sample”.");
     }
     retainEvidenceDocuments([...files.files, ...audio.files]);
-    setProcessing("#financialProcessingState", "Securely organising your evidence…");
+    await runProgressiveProcessing("#financialProcessingState", [
+      "Reading your screenshot…",
+      "Looking for transaction details…",
+      "Checking extracted information…",
+    ]);
     const transcription = await transcribeEvidence("financial", audio);
     const combinedText = [pastedText, transcription?.data?.transcript].filter(Boolean).join("\n\nVoice note transcript:\n");
     const extraction = await extractEvidence("financial", files, combinedText);
     applyFinancialExtraction(extraction, transcription);
+    const outcome = classifyFinancialExtraction(extraction);
     state.financial.evidenceReady = true;
     state.financial.activeSection = "myDetails";
     render("financialWorkspace");
-    showMessage(extraction.message);
+    showMessage(outcome.message, outcome.kind === "wrong_or_empty" ? "error" : "info");
   } catch (error) {
     setProcessing("#financialProcessingState", error.message, true);
+    showMessage(error.message, "error");
   }
 }
 
@@ -1748,22 +1857,28 @@ async function processWcEvidence() {
       throw new Error("Add something you already have, or choose “Use sample”.");
     }
     retainWcEvidenceDocuments([...files.files, ...audio.files]);
-    setProcessing("#wcProcessingState", "Preparing a neutral draft. You stay in control…");
+    await runProgressiveProcessing("#wcProcessingState", [
+      "Reading your screenshot…",
+      "Looking for incident details…",
+      "Checking extracted information…",
+    ]);
     try {
       const transcription = await transcribeEvidence("women_children", audio);
       const combinedText = [pastedText, transcription?.data?.transcript].filter(Boolean).join("\n\nVoice note transcript:\n");
       const extraction = await extractEvidence("women_children", files, combinedText);
       applyWcExtraction(extraction, transcription);
-      showMessage(extraction.message);
+      const outcome = classifyWcExtraction(extraction);
+      showMessage(outcome.message, outcome.kind === "wrong_or_empty" ? "error" : "info");
     } catch {
       mockWcEvidence();
-      showMessage("Sample data was used to prepare a starting draft. Review every field.");
+      showMessage("We couldn't read the details clearly. You can still report this—review and complete the fields below.");
     }
     state.wc.evidenceReady = true;
     state.wc.activeSection = wcDefaultSection();
     render("wcWorkspace");
   } catch (error) {
     setProcessing("#wcProcessingState", error.message, true);
+    showMessage(error.message, "error");
   }
 }
 

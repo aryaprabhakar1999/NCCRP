@@ -28,6 +28,9 @@
       <nav id="journeyProgress" class="journey-progress hidden" aria-label="Report progress"></nav>
       <main id="app" class="app-main" tabindex="-1"></main>
       <div id="globalStatus" class="sr-only" role="status" aria-live="polite"></div>
+      <footer class="app-footer" role="contentinfo">
+        <p>Independent prototype for Build What Moves India. Not an official NCRP or government service.</p>
+      </footer>
     </div>
 
     <template id="login-template">
@@ -271,7 +274,7 @@
         <button class="ghost back" type="button" data-next="womenChildren">Back</button>
         <p class="eyebrow" id="wcModeLabel">Anonymous report</p>
         <h2>Keep these details ready</h2>
-        <p class="support-note">Do not worry if something is missing. Add the evidence you already have and review every prepared detail before prototype submission.</p>
+        <p class="support-note">Add screenshots or notes you feel safe sharing, or enter details manually. You stay in control of how much you reveal.</p>
         <div class="prereq-layout">
           <div class="prereq-list">
             <h3>Information you may need</h3>
@@ -397,6 +400,7 @@
         <button class="ghost back" type="button" data-action="edit-wc-section" data-section="suspectDetails">Back to report</button>
         <p class="eyebrow">Preview and submit</p>
         <h2>Review your report</h2>
+        <p class="support-note">Review the organised draft before prototype submission. Edit anything incorrect; this is not an official filing.</p>
         <div id="wcPreviewContent" class="preview-grid"></div>
         <label class="inline-check certification"><input id="wcCertify" type="checkbox" /> I confirm this report is ready for prototype submission.</label>
         <button class="primary" type="button" data-action="submit-wc-report">Submit prototype report</button>
@@ -408,10 +412,12 @@
         <p class="eyebrow">Prototype submission complete</p>
         <h2>Report prepared</h2>
         <p>Your report was completed in <strong id="wcFinalTime">00:00</strong>. No data was sent to the official portal.</p>
+        <p class="hint">Prototype acknowledgement only — not an official government reference number.</p>
         <aside class="danger-card" aria-label="Real-world safety next steps">
           <strong>This prototype cannot provide emergency help</strong>
           <span>For immediate danger call <a href="tel:112">112</a>. For a real cybercrime report, use <a href="https://www.cybercrime.gov.in/" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>.</span>
         </aside>
+        <p class="support-note">Prototype complete. For immediate danger use 112; for a real report use the official portal.</p>
         <button class="primary" type="button" data-action="go-home">Go to Home</button>
       </section>
     </template>
@@ -490,7 +496,7 @@
         <button class="ghost back" type="button" data-action="financial-prereq-back">Back</button>
         <p class="eyebrow">Before you start</p>
         <h2>Keep these details ready</h2>
-        <p class="support-note">Do not worry if something is missing. Add the evidence you already have and review every prepared detail before prototype submission.</p>
+        <p class="support-note">You can manually fill the report by having these details ready. For assistance and easier filling, upload the documents and attachments—AI will read and fill the form. You can simply review and submit them.</p>
         <div class="prereq-layout">
           <div class="prereq-list">
             <h3 id="detailsReadyHeading">Information you may need</h3>
@@ -564,7 +570,7 @@
         <button class="ghost back" type="button" data-action="edit-report-section" data-section="suspectDetails">Back to report</button>
         <p class="eyebrow">Preview and submit</p>
         <h2>Review your report</h2>
-        <p class="support-note">Nothing has been sent. Check each section and return to edit anything that does not look right.</p>
+        <p class="support-note">Final check of the AI-assisted draft. Nothing is sent to the official portal; submit only creates a prototype acknowledgement for this demo. Check each section and return to edit anything that does not look right.</p>
         <div id="previewContent" class="preview-grid"></div>
         <label class="inline-check certification"><input id="certify" type="checkbox" /> I confirm the information is correct for this prototype submission.</label>
         <div class="button-row">
@@ -579,7 +585,7 @@
         <p class="eyebrow">Prototype submission complete</p>
         <h2>Your report is ready</h2>
         <p>Your report was completed in <strong id="finalTime">00:00</strong>. No data was sent to the official portal.</p>
-        <div class="ack-card"><small>Sample acknowledgement</small><strong>NCCRP-FIN-2026-10482</strong></div>
+        <div class="ack-card"><small>Prototype acknowledgement only — not an official government reference number.</small><strong>NCCRP-FIN-2026-10482</strong></div>
         <button class="primary download-button" type="button" data-action="download-report-pdf">Download report as PDF</button>
         <p id="pdfStatus" class="hint" role="status" aria-live="polite"></p>
         <aside class="urgent-card" aria-label="Next steps for a real report">
