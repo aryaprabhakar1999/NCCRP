@@ -103,6 +103,31 @@ test("audio endpoint falls back safely without an API key", async () => {
   if (originalKey) process.env.OPENAI_API_KEY = originalKey;
   assert.equal(response.payload.mode, "demo_fallback");
   assert.match(response.payload.data.transcript, /Voice note/);
+  assert.equal(response.payload.data.extractedFields.suspectMobile, "9123456780");
+  assert.ok(response.payload.data.draftDescription.length >= 200);
+});
+
+test("financial audio fallback includes suspect name and mobile for mapping", async () => {
+  const originalKey = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  const request = multipartRequest(
+    { flowType: "financial" },
+    [{ fieldName: "audio", filename: "note.webm", mimeType: "audio/webm", buffer: Buffer.from("synthetic-audio") }],
+  );
+  const response = mockResponse();
+  await transcribeHandler(request, response);
+  if (originalKey) process.env.OPENAI_API_KEY = originalKey;
+  assert.equal(response.payload.data.extractedFields.suspectName, "Ravi Kumar");
+  assert.equal(response.payload.data.extractedFields.suspectMobile, "9876512340");
+  assert.match(response.payload.data.transcript, /Ravi Kumar/);
+});
+
+test("evidence fallback includes suspect object for financial and women-children flows", () => {
+  assert.equal(fallbackFinancial.suspect.name, "Ravi Kumar");
+  assert.equal(fallbackFinancial.suspect.mobile, "9876512340");
+  assert.equal(fallbackWomenChildren.suspect.username, "@unknown_profile");
+  assert.equal(financialSchema.parse(fallbackFinancial).suspect.mobile, "9876512340");
+  assert.equal(womenChildrenSchema.parse(fallbackWomenChildren).suspect.username, "@unknown_profile");
 });
 
 test("evidence endpoint rejects unsupported files before model processing", async () => {

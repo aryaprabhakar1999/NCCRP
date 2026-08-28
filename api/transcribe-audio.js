@@ -2,19 +2,26 @@ import { toFile } from "openai";
 import { fallbackFinancial, fallbackWomenChildren } from "./_lib/fallbacks.js";
 import { parseMultipart, requirePost, sendError, sendJson } from "./_lib/http.js";
 import { hasOpenAiKey, openAiClient } from "./_lib/openai.js";
+import { extractSuspectHintsFromText, suspectHintsToExtractedFields } from "../lib/suspectHints.js";
 
 function fallbackAudio(flowType) {
   if (flowType === "women_children") {
     return {
-      transcript: "Voice note: I want to report repeated unwanted messages and threats from an Instagram account.",
+      transcript: "Voice note: I want to report repeated unwanted messages and threats from an Instagram account named unknown_profile. They also messaged from mobile 9123456780.",
       draftDescription: fallbackWomenChildren.complaint.description,
-      extractedFields: {},
+      extractedFields: {
+        suspectUsername: "@unknown_profile",
+        suspectMobile: "9123456780",
+      },
     };
   }
   return {
-    transcript: "Voice note: Twenty-four thousand five hundred rupees left my account through UPI without my permission.",
+    transcript: "Voice note: Someone named Ravi Kumar called from 9876512340. Twenty-four thousand five hundred rupees left my account through UPI without my permission.",
     draftDescription: fallbackFinancial.complaint.description,
-    extractedFields: {},
+    extractedFields: {
+      suspectName: "Ravi Kumar",
+      suspectMobile: "9876512340",
+    },
   };
 }
 
@@ -27,7 +34,7 @@ async function prepareDraft(client, flowType, transcript) {
     input: [
       {
         role: "system",
-        content: `Turn a citizen's voice-note transcript into an editable first-person Indian cybercrime incident description of 200–900 characters. ${safety} Do not invent details.`,
+        content: `Turn a citizen's voice-note transcript into an editable first-person Indian cybercrime incident description of 200–900 characters. ${safety} Include any spoken suspect name, mobile number, username, or platform when present. Do not invent details.`,
       },
       { role: "user", content: transcript },
     ],
@@ -67,11 +74,12 @@ export default async function handler(request, response) {
       const transcript = transcription.text?.trim();
       if (!transcript) throw new Error("No speech was detected.");
       const draftDescription = await prepareDraft(client, flowType, transcript);
+      const extractedFields = suspectHintsToExtractedFields(extractSuspectHintsFromText(transcript));
       return sendJson(response, 200, {
         ok: true,
         mode: "live_openai",
         message: "Voice note transcribed. Review the transcript and prepared draft.",
-        data: { transcript, draftDescription, extractedFields: {} },
+        data: { transcript, draftDescription, extractedFields },
       });
     } catch {
       return sendJson(response, 200, {

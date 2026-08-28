@@ -1,3 +1,5 @@
+import { extractSuspectHintsFromText, normalizeIndianMobile } from "./lib/suspectHints.js";
+
 const app = document.querySelector("#app");
 const journeyProgress = document.querySelector("#journeyProgress");
 const globalStatus = document.querySelector("#globalStatus");
@@ -539,7 +541,11 @@ function updateAuthButton() {
   const controls = document.querySelector("#authControls");
   if (!controls) return;
   if (state.auth.isSignedIn) {
-    controls.innerHTML = `<button id="authButton" class="auth-button" type="button" data-action="open-login">Signed in: ${state.auth.mobile || state.reporter.mobile}</button>`;
+    const mobile = state.auth.mobile || state.reporter.mobile || "";
+    controls.innerHTML = `
+      <span class="auth-signed-in" aria-live="polite">Signed in: ${mobile}</span>
+      <button id="signOutButton" class="auth-button auth-button-signout" type="button" data-action="sign-out">Sign out</button>
+    `;
     return;
   }
   controls.innerHTML = `
@@ -1934,11 +1940,55 @@ async function transcribeEvidence(flowType, audioInput) {
   return postForm("/api/transcribe-audio", formData, 60000);
 }
 
+function preferLongerText(current, incoming) {
+  const a = String(current || "").trim();
+  const b = String(incoming || "").trim();
+  if (!b) return a;
+  if (!a) return b;
+  return b.length >= a.length ? b : a;
+}
+
+function applySuspectFromExtraction(store, suspect) {
+  if (!store || !suspect) return false;
+  const name = String(suspect.name || suspect.suspectName || "").trim();
+  const mobile = normalizeIndianMobile(suspect.mobile || suspect.suspectMobile);
+  const email = String(suspect.email || "").trim();
+  const username = String(suspect.username || suspect.suspectUsername || "").trim();
+  const otherInfo = String(suspect.otherInfo || "").trim();
+  if (!name && !mobile && !email && !username && !otherInfo) return false;
+
+  if (Object.prototype.hasOwnProperty.call(store, "hasDetails")) store.hasDetails = true;
+  if (name) store.suspectName = store.suspectName || name;
+
+  const identities = Array.isArray(store.identities) ? [...store.identities] : [];
+  const addId = (idType, idNumber) => {
+    const value = String(idNumber || "").trim();
+    if (!value) return;
+    if (identities.some((item) => item.idType === idType && item.idNumber === value)) return;
+    identities.push({ idType, idNumber: value });
+  };
+  if (mobile) addId("Mobile No.", mobile);
+  if (email) addId("Email", email);
+  if (username) addId("Username", username);
+  store.identities = identities;
+
+  if (otherInfo) {
+    store.otherInfo = [store.otherInfo, otherInfo].filter(Boolean).join(" ").slice(0, 250);
+  }
+  return true;
+}
+
 function applyFinancialExtraction(payload, transcription) {
   const data = payload.data || {};
   if (data.transaction) state.transactions = [{ ...state.transactions[0], ...data.transaction }];
   if (data.complaint) state.complaint = { ...state.complaint, ...data.complaint };
-  if (transcription?.data?.draftDescription) state.complaint.description = transcription.data.draftDescription;
+  if (transcription?.data?.draftDescription) {
+    state.complaint.description = preferLongerText(state.complaint.description, transcription.data.draftDescription);
+  }
+  // Voice transcript / extracted fields first so demo sample extract cannot override spoken details.
+  applySuspectFromExtraction(state.suspect, extractSuspectHintsFromText(transcription?.data?.transcript));
+  applySuspectFromExtraction(state.suspect, transcription?.data?.extractedFields);
+  applySuspectFromExtraction(state.suspect, data.suspect);
   state.ai.financial = {
     mode: transcription?.mode === "demo_fallback" ? "demo_fallback" : payload.mode,
     confidence: data.confidence || {},
@@ -1950,7 +2000,20 @@ function applyWcExtraction(payload, transcription) {
   const data = payload.data || {};
   if (data.evidence) state.wc.evidence = { ...state.wc.evidence, ...data.evidence };
   if (data.complaint) state.wc.complaint = { ...state.wc.complaint, ...data.complaint };
-  if (transcription?.data?.draftDescription) state.wc.complaint.description = transcription.data.draftDescription;
+  if (transcription?.data?.draftDescription) {
+    state.wc.complaint.description = preferLongerText(state.wc.complaint.description, transcription.data.draftDescription);
+  }
+  applySuspectFromExtraction(state.wc.suspect, extractSuspectHintsFromText(transcription?.data?.transcript));
+  applySuspectFromExtraction(state.wc.suspect, transcription?.data?.extractedFields);
+  applySuspectFromExtraction(state.wc.suspect, data.suspect);
+  if (data.evidence?.people && !state.wc.suspect.suspectName && !state.wc.suspect.identities?.length) {
+    const people = String(data.evidence.people).split(/,| and /i)[0].trim();
+    if (people.startsWith("@") || /^[A-Za-z0-9._]{3,30}$/.test(people)) {
+      applySuspectFromExtraction(state.wc.suspect, { username: people.startsWith("@") ? people : `@${people}` });
+    } else if (people) {
+      applySuspectFromExtraction(state.wc.suspect, { name: people, otherInfo: `Mentioned in evidence: ${data.evidence.people}` });
+    }
+  }
   state.wc.entry = "evidence";
   state.ai.womenChildren = {
     mode: transcription?.mode === "demo_fallback" ? "demo_fallback" : payload.mode,
@@ -2382,6 +2445,21 @@ async function handleAction(action, target) {
     state.wc.completedSections = [];
     state.wc.activeSection = "incidentDetails";
     render("home");
+    return;
+  }
+  if (action === "sign-out") {
+    state.auth.isSignedIn = false;
+    state.auth.mobile = "";
+    state.auth.otpSent = false;
+    state.auth.otpVerified = false;
+    state.auth.profileReady = false;
+    state.auth.mode = "login";
+    state.returnAfterAuth = "home";
+    releaseDocument(state.documents.reporter);
+    state.documents.reporter = null;
+    updateAuthButton();
+    render("home");
+    showMessage("You have signed out.");
     return;
   }
   if (action === "open-login") {

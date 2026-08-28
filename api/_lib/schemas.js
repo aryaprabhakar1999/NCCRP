@@ -20,6 +20,14 @@ const wcCategory = z.enum([
 ]);
 const platform = z.enum(["Email", "Facebook", "Instagram", "Snapchat", "Twitter", "WhatsApp", "Website URL", "YouTube", "LinkedIn", "Telegram", "Other"]);
 
+const suspectDetails = z.object({
+  name: z.string(),
+  mobile: z.string(),
+  email: z.string(),
+  username: z.string(),
+  otherInfo: z.string(),
+});
+
 export const financialSchema = z.object({
   transaction: z.object({
     wallet: z.string(),
@@ -38,6 +46,7 @@ export const financialSchema = z.object({
     occurredAt: financialLocation,
     description: z.string(),
   }),
+  suspect: suspectDetails,
   confidence: z.object({
     wallet: confidence,
     account: confidence,
@@ -67,6 +76,7 @@ export const womenChildrenSchema = z.object({
     occurredAt: platform,
     description: z.string(),
   }),
+  suspect: suspectDetails,
   confidence: z.object({
     suggestedCategory: confidence,
     platform: confidence,

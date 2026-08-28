@@ -306,7 +306,9 @@ a {
 .auth-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 10px;
 }
 
 .auth-button {
@@ -317,6 +319,23 @@ a {
   background: #eef7f4;
   color: var(--teal-dark);
   font-weight: 850;
+}
+
+.auth-signed-in {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 4px;
+  color: var(--teal-dark);
+  font-weight: 750;
+  font-size: 0.92rem;
+}
+
+.auth-button-signout {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #334155;
+  font-weight: 700;
 }
 
 .otp-block {

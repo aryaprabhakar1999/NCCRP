@@ -6,9 +6,11 @@ const configuration = {
   financial: {
     schema: financialSchema,
     formatName: "financial_evidence",
-    prompt: `Extract only details visibly supported by the supplied evidence for an Indian online financial-fraud complaint.
+    prompt: `Extract only details supported by the supplied evidence for an Indian online financial-fraud complaint.
+Evidence may include payment screenshots AND a "Voice note transcript" section — treat spoken details as evidence.
 Use YYYY-MM-DD dates and 24-hour HH:MM times. Amount must contain digits only. Do not invent missing IDs.
-The incident description should be neutral, first-person, at least 200 characters, and must distinguish facts from uncertainty.
+Fill suspect.name, suspect.mobile, suspect.email, suspect.username, and suspect.otherInfo when the scammer/suspect is named or identified in text, screenshots, or the voice transcript. Use empty strings when unknown. Prefer a 10-digit Indian mobile when spoken or written.
+The incident description should be neutral, first-person, at least 200 characters, and must distinguish facts from uncertainty. Include suspect name or mobile in the description when the citizen mentioned them.
 Use the closest NCCRP field labels. Give lower confidence to unclear values and list fields that need citizen review.`,
   },
   women_children: {
@@ -16,6 +18,8 @@ Use the closest NCCRP field labels. Give lower confidence to unclear values and 
     formatName: "women_children_evidence",
     prompt: `Prepare a neutral, non-graphic summary for an Indian cybercrime report involving women or children.
 Do not repeat explicit material or make legal conclusions. Extract only visible platform, dates, usernames, and sequence of events.
+Evidence may include screenshots AND a "Voice note transcript" — treat spoken suspect name, mobile, username, or profile details as evidence.
+Fill suspect.name, suspect.mobile, suspect.email, suspect.username, and suspect.otherInfo when mentioned; otherwise use empty strings.
 Use YYYY-MM-DD and 24-hour HH:MM. The description must be supportive, factual, at least 200 characters, and editable.
 Mark uncertain or inferred fields for citizen review.`,
   },
