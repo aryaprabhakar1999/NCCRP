@@ -15,6 +15,9 @@
   --focus: #155eef;
   --calm: #eaf5ff;
   --shadow: 0 18px 55px rgba(20, 45, 40, 0.12);
+  --page-gutter: 48px;
+  --content-max: 1440px;
+  --content-narrow-max: 1100px;
 }
 
 * {
@@ -30,8 +33,8 @@ body {
 }
 
 .app-footer {
-  width: min(1180px, calc(100% - 32px));
-  margin: 0 auto 28px;
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
+  margin: 0 auto 20px;
   padding: 12px 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -334,21 +337,24 @@ a {
 .hero-overlay {
   position: relative;
   z-index: 1;
-  width: min(980px, calc(100% - 32px));
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
   padding: clamp(34px, 7vw, 82px) 0 58px clamp(16px, 5vw, 58px);
 }
 
 .urgent-card,
 .danger-card {
   display: grid;
-  gap: 5px;
-  max-width: 680px;
+  gap: 6px;
+  width: 100%;
+  max-width: none;
   margin: 0 0 24px;
   padding: 14px 16px;
   border: 1px solid #e8c46c;
   border-radius: 12px;
   background: #fff9e8;
   line-height: 1.45;
+  box-sizing: border-box;
+  text-align: left;
 }
 
 .danger-card {
@@ -409,7 +415,8 @@ h2 {
 .choice-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
+  width: 100%;
 }
 
 .two-actions {
@@ -420,10 +427,10 @@ h2 {
 
 .choice-card {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
   min-height: 112px;
-  padding: 18px;
+  padding: 16px 14px;
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -449,29 +456,47 @@ h2 {
 .choice-icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--teal);
   color: white;
   font-weight: 900;
-  font-size: 24px;
+  font-size: 20px;
+}
+
+.choice-card > span:last-child {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .choice-card strong,
-.choice-card small {
+.choice-card small,
+.choice-card .choice-cta {
   display: block;
 }
 
 .choice-card strong {
   margin-bottom: 6px;
-  font-size: 17px;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .choice-card small {
   color: var(--muted);
   line-height: 1.35;
+  font-size: 13px;
+}
+
+.choice-card .choice-cta {
+  margin-top: 8px;
+  color: var(--teal-dark);
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .request-list {
@@ -559,9 +584,38 @@ h2 {
   text-align: center;
 }
 
+.help-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.1fr) minmax(0, 1.4fr);
+  gap: 16px 28px;
+  align-items: center;
+  padding: 14px clamp(16px, 4vw, 40px);
+  border-top: 1px solid #e8c46c;
+  background: #fff9e8;
+  color: #263632;
+  line-height: 1.4;
+}
+
+.help-strip-title {
+  color: #9a3412;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.help-strip span {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.help-strip a {
+  color: var(--teal-dark);
+  font-weight: 750;
+}
+
 .panel {
-  width: min(1040px, calc(100% - 32px));
-  margin: 34px auto;
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
+  margin: 20px auto;
   padding: clamp(22px, 4vw, 38px);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -570,7 +624,7 @@ h2 {
 }
 
 .panel.narrow {
-  width: min(760px, calc(100% - 32px));
+  width: min(var(--content-narrow-max), calc(100% - var(--page-gutter)));
 }
 
 .panel p {
@@ -587,11 +641,15 @@ h2 {
 }
 
 .support-note {
-  max-width: 760px;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 18px;
   padding: 12px 14px;
   background: #fff8eb;
   border-left: 4px solid var(--saffron);
   border-radius: 10px;
+  box-sizing: border-box;
+  text-align: left;
 }
 
 .back {
@@ -718,7 +776,7 @@ small,
 }
 
 .prereq-panel {
-  width: min(1180px, calc(100% - 32px));
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
 }
 
 .prereq-layout {
@@ -726,7 +784,7 @@ small,
   grid-template-columns: minmax(260px, 0.8fr) 70px minmax(380px, 1.2fr);
   gap: 22px;
   align-items: start;
-  margin-top: 28px;
+  margin-top: 18px;
   max-height: calc(100vh - 220px);
 }
 
@@ -895,10 +953,10 @@ small,
 .report-workspace {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  width: min(1220px, calc(100% - 32px));
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
   height: calc(100vh - 170px);
   min-height: 480px;
-  margin: 28px auto;
+  margin: 16px auto;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -994,8 +1052,12 @@ small,
 }
 
 .section-intro {
-  max-width: 720px;
+  width: 100%;
+  max-width: none;
   margin-bottom: 26px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .report-for-choice {
@@ -1457,12 +1519,15 @@ td input {
 .ack-card {
   display: grid;
   gap: 5px;
-  max-width: 420px;
-  margin: 18px auto;
+  width: 100%;
+  max-width: none;
+  margin: 18px 0;
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #f5fbf9;
+  box-sizing: border-box;
+  text-align: left;
 }
 
 .ack-card strong {
@@ -1476,6 +1541,34 @@ td input {
 
 .success {
   text-align: center;
+}
+
+.success .danger-card,
+.success .urgent-card,
+.success .support-note,
+.success .ack-card {
+  width: 100%;
+  max-width: min(640px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.success .button-row {
+  max-width: min(640px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.success > .primary,
+.success > .secondary,
+.success > .download-button {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panel.narrow.success {
+  width: min(var(--content-max), calc(100% - var(--page-gutter)));
 }
 
 .success::before {
@@ -1496,6 +1589,10 @@ td input {
   .choice-grid,
   .request-list {
     grid-template-columns: 1fr;
+  }
+
+  .choice-card strong {
+    white-space: normal;
   }
 
   .prereq-layout {
@@ -1618,6 +1715,16 @@ td input {
   .form-grid,
   .checklist {
     grid-template-columns: 1fr;
+  }
+
+  .help-strip {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .help-strip-title {
+    white-space: normal;
   }
 
   .choice-card {
