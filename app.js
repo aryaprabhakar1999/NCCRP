@@ -640,6 +640,22 @@ function retainIdentityDocument(role, file, type, demo = false) {
   };
 }
 
+/** Header login does not collect an ID upload; attach a session identity so filing can continue. */
+function ensureSignedInReporterIdentity() {
+  if (!state.auth.isSignedIn) return;
+  const mobile = state.auth.mobile || state.reporter.mobile || sampleProfile.mobile;
+  state.auth.mobile = mobile;
+  state.reporter = {
+    ...sampleProfile,
+    ...state.reporter,
+    mobile,
+  };
+  if (!state.documents.reporter) {
+    retainIdentityDocument("reporter", null, "Aadhaar", true);
+  }
+  state.auth.profileReady = true;
+}
+
 function retainEvidenceDocuments(files) {
   state.documents.evidence.forEach(releaseDocument);
   state.documents.evidence = files.map((file) => ({
@@ -2516,6 +2532,7 @@ async function handleAction(action, target) {
     state.auth.otpVerified = true;
     state.auth.isSignedIn = true;
     state.reporter.mobile = state.auth.mobile || state.reporter.mobile;
+    ensureSignedInReporterIdentity();
     showMessage("You are signed in for this session.");
     render(state.returnAfterAuth && state.returnAfterAuth !== "login" && state.returnAfterAuth !== "signup" ? state.returnAfterAuth : "home");
     return;
@@ -2592,6 +2609,7 @@ async function handleAction(action, target) {
   }
   if (action === "start-financial-report") {
     if (state.auth.isSignedIn) {
+      ensureSignedInReporterIdentity();
       state.financial.entry = "existing";
       render("prereq");
     } else {
@@ -2880,8 +2898,8 @@ async function handleAction(action, target) {
     }
     state.financial.entry = "existing";
     state.auth.isSignedIn = true;
-    state.auth.mobile = state.reporter.mobile;
-    if (!state.documents.reporter) retainIdentityDocument("reporter", null, "Aadhaar", true);
+    state.auth.mobile = state.reporter.mobile || state.auth.mobile;
+    ensureSignedInReporterIdentity();
     render("prereq");
     return;
   }
